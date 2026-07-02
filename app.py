@@ -9,20 +9,19 @@ import streamlit.components.v1 as components
 # --- ページ全体の設定 ---
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- カスタムCSS（超強力版） ---
+# --- カスタムCSS（安全な修正版） ---
 st.markdown("""
     <style>
     /* ==========================================
-       Streamlitロゴバッジを【強制的に】非表示にする
+       Streamlitロゴやヘッダーを【安全に】非表示にする
        ========================================== */
     header {visibility: hidden !important;}
     footer {visibility: hidden !important;}
-    .viewerBadge_container__1QSob, .viewerBadge_link__1S137, 
-    a[href^="https://streamlit.io/cloud"], 
-    div[data-testid="stAppViewContainer"] > div:last-child {
+    /* サイト本体を消さずに右下バッジだけを狙い撃ちにする */
+    .viewerBadge_container__1QSob, 
+    .viewerBadge_link__1S137, 
+    a[href^="https://streamlit.io/cloud"] {
         display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
     }
     
     /* ==========================================
