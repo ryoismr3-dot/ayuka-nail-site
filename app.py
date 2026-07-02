@@ -1,14 +1,11 @@
 import streamlit as st
 import datetime
-import base64
-import os
 import smtplib
 from email.mime.text import MIMEText
-import streamlit.components.v1 as components
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- スプレッドシートから設定を読み込む ---
+# --- 1. スプレッドシート連携設定 ---
 def get_config():
     try:
         creds = ServiceAccountCredentials.from_json_keyfile_dict(
@@ -24,45 +21,52 @@ def get_config():
 
 config = get_config()
 
-# --- ページ設定 ---
+# --- 2. ページ設定 ---
 st.set_page_config(page_title=config['site_title'], layout="wide", initial_sidebar_state="collapsed")
 
-# --- カスタムCSS ---
-st.markdown(f"""
+# --- 3. デザインCSS ---
+st.markdown("""
     <style>
-    header {{visibility: hidden !important;}}
-    .stApp {{ background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 25%, #c2e9fb 50%, #e0c3fc 75%, #f6d365 100%); background-attachment: fixed; }}
-    h1 {{ text-align: center; background: -webkit-linear-gradient(45deg, #ff7eb3, #7facfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; margin-bottom: 20px; }}
-    .stButton > button {{ background: rgba(255, 255, 255, 0.4); border-radius: 30px; padding: 12px 28px; transition: all 0.4s; }}
-    .stButton > button:hover {{ background: rgba(255, 255, 255, 0.9); color: #ff7eb3; }}
-    .stTextInput input, .stDateInput input {{ background-color: rgba(255,255,255,0.8); border-radius: 10px; }}
+    header {visibility: hidden !important;}
+    .stApp { background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 25%, #c2e9fb 50%, #e0c3fc 75%, #f6d365 100%); background-attachment: fixed; }
+    h1 { text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .stButton > button { background: rgba(255, 255, 255, 0.5); border-radius: 20px; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ページ切り替え用 ---
+# --- 4. ページ遷移ロジック ---
 if 'page' not in st.session_state: st.session_state.page = 'login'
 
-# --- ページごとの処理 ---
+# --- A. ログイン画面 ---
 if st.session_state.page == 'login':
     st.markdown(f"<h1>{config['site_title']}</h1>", unsafe_allow_html=True)
-    password = st.text_input("Password", type="password", placeholder="パスワードを入力")
-    if st.button("LOG IN"):
+    password = st.text_input("パスワードを入力", type="password")
+    if st.button("ログイン"):
         if password == "1234":
             st.session_state.page = 'home'
             st.rerun()
 
+# --- B. ホーム画面 ---
 elif st.session_state.page == 'home':
-    st.markdown(f"<h1>Welcome</h1>", unsafe_allow_html=True)
-    st.write(f"<p style='text-align:center;'>{config['welcome_message']}</p>", unsafe_allow_html=True)
-    if st.button("📅 ネイルの予約へ"): st.session_state.page = 'reserve'; st.rerun()
+    st.markdown(f"<h1>{config['welcome_message']}</h1>", unsafe_allow_html=True)
+    if st.button("📅 予約フォームへ"): st.session_state.page = 'reserve'; st.rerun()
     if st.button("📸 ギャラリーへ"): st.session_state.page = 'gallery'; st.rerun()
 
+# --- C. 予約フォーム ---
 elif st.session_state.page == 'reserve':
-    st.markdown("<h1>🛍️ Reservation</h1>", unsafe_allow_html=True)
-    # ここに以前の予約フォームのロジック（日付・メール送信）を記述
-    if st.button("← ホームへ"): st.session_state.page = 'home'; st.rerun()
+    st.markdown("<h1>予約フォーム</h1>", unsafe_allow_html=True)
+    name = st.text_input("お名前")
+    date = st.date_input("希望日")
+    if st.button("送信"):
+        st.success(f"{name}様、{date}で仮予約を受け付けました！")
+        # Gmail送信ロジックをここに追加可能
+    if st.button("← 戻る"): st.session_state.page = 'home'; st.rerun()
 
+# --- D. ギャラリー ---
 elif st.session_state.page == 'gallery':
-    st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
-    # ここに以前のギャラリー用コンポーネントを記述
-    if st.button("← ホームへ"): st.session_state.page = 'home'; st.rerun()
+    st.markdown("<h1>ネイルギャラリー</h1>", unsafe_allow_html=True)
+    # 例：以前の画像表示
+    col1, col2 = st.columns(2)
+    with col1: st.image("nail1.png")
+    with col2: st.image("nail2.png")
+    if st.button("← 戻る"): st.session_state.page = 'home'; st.rerun()
