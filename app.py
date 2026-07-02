@@ -9,20 +9,18 @@ import streamlit.components.v1 as components
 # --- ページ全体の設定 ---
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- カスタムCSS（安全な修正版） ---
+# --- カスタムCSS（時間ドロップダウン・バッジ非表示の最終形態） ---
 st.markdown("""
     <style>
     /* ==========================================
-       Streamlitロゴやヘッダーを【安全に】非表示にする
+       Streamlitロゴ・ヘッダー・右下バッジの完全非表示
        ========================================== */
     header {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
-    /* サイト本体を消さずに右下バッジだけを狙い撃ちにする */
-    .viewerBadge_container__1QSob, 
-    .viewerBadge_link__1S137, 
-    a[href^="https://streamlit.io/cloud"] {
-        display: none !important;
-    }
+    #MainMenu {visibility: hidden !important;}
+    footer {display: none !important;}
+    .stDeployButton {display: none !important;}
+    [class^="viewerBadge"] {display: none !important;}
+    a[href^="https://streamlit.io/cloud"] {display: none !important;}
     
     /* ==========================================
        オリジナルデザイン設定
@@ -74,36 +72,42 @@ st.markdown("""
     }
     
     /* ==========================================
-       時間の文字を強制的に【白】にする設定
+       入力欄（日付・時間）を白文字にするピンポイント設定
        ========================================== */
-    .stTextInput > div > div > input,
-    .stDateInput > div > div > input,
-    div[data-baseweb="select"] > div { 
+    /* 日付とテキスト入力欄の背景と文字色 */
+    .stTextInput input, .stDateInput input { 
         background-color: rgba(40, 40, 40, 0.9) !important; 
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.4) !important; 
         border-radius: 10px !important; 
         padding: 10px !important;
     }
     
-    /* 時間の文字色（スマホでも絶対に見えるように指定） */
-    .stTextInput > div > div > input,
-    .stDateInput > div > div > input,
-    div[data-baseweb="select"] * {
+    /* 時間のドロップダウン（selectbox）の背景と枠 */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(40, 40, 40, 0.9) !important; 
+        border: 1px solid rgba(255, 255, 255, 0.4) !important; 
+        border-radius: 10px !important; 
+    }
+    
+    /* 時間のドロップダウンの中の【文字】を強制的に白にする */
+    div[data-baseweb="select"] span {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
-        opacity: 1 !important;
         text-shadow: none !important;
     }
 
-    /* カレンダーとドロップダウンメニューの背景 */
-    ul[role="listbox"], div[data-baseweb="calendar"] {
+    /* クリックして開いた後の選択肢の背景と文字 */
+    ul[role="listbox"] {
         background-color: #333333 !important;
     }
     ul[role="listbox"] li {
         color: #ffffff !important;
-        background-color: #333333 !important;
+        background-color: transparent !important;
     }
     
+    /* Streamlit特有の余白を消す */
     .st-emotion-cache-1wmy9hl { background-color: transparent !important; }
     
     @media (max-width: 768px) { 
