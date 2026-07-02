@@ -9,23 +9,21 @@ import streamlit.components.v1 as components
 # --- ページ全体の設定 ---
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- カスタムCSS ---
+# --- カスタムCSS（超強力版） ---
 st.markdown("""
     <style>
     /* ==========================================
-       StreamlitデフォルトUIとCloudバッジを完全に非表示
+       Streamlitロゴバッジを【強制的に】非表示にする
        ========================================== */
     header {visibility: hidden !important;}
-    #MainMenu {visibility: hidden !important;}
     footer {visibility: hidden !important;}
-    .stDeployButton {display: none !important;}
-    [data-testid="stToolbar"] {visibility: hidden !important;}
-    
-    /* Streamlit Cloud 右下のロゴを完全に消す強力な設定 */
-    iframe[title="Streamlit Community Cloud Badge"] {display: none !important;}
-    a[href*="streamlit.io/cloud"] {display: none !important;}
-    div[class^="viewerBadge"] {display: none !important;}
-    .viewerBadge_container__1QSob, .viewerBadge_link__1S137 {display: none !important;}
+    .viewerBadge_container__1QSob, .viewerBadge_link__1S137, 
+    a[href^="https://streamlit.io/cloud"], 
+    div[data-testid="stAppViewContainer"] > div:last-child {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
     
     /* ==========================================
        オリジナルデザイン設定
@@ -38,7 +36,6 @@ st.markdown("""
         font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
     }
     
-    /* 以前のdiv,spanへの一括指定を外し、文字がぼやけるバグを修正 */
     p, label { 
         color: #4a4a4a !important; 
         text-shadow: 2px 2px 5px rgba(255,255,255,0.9); 
@@ -58,10 +55,6 @@ st.markdown("""
         margin-bottom: 20px; 
         font-size: 3.5rem; 
     }
-    h2, h3 { 
-        color: #6a82fb !important; 
-        text-shadow: 2px 2px 4px rgba(255,255,255,0.9); 
-    }
     
     .stButton > button { 
         background: rgba(255, 255, 255, 0.4); 
@@ -78,48 +71,40 @@ st.markdown("""
     .stButton > button:hover { 
         background: rgba(255, 255, 255, 0.9); 
         border-color: #ff7eb3; 
-        transform: translateY(-3px); 
-        box-shadow: 0 8px 25px rgba(255,126,179,0.3); 
         color: #ff7eb3 !important; 
     }
     
     /* ==========================================
-       入力欄（パスワード、日付、時間）の統一デザイン
+       時間の文字を強制的に【白】にする設定
        ========================================== */
-    /* 背景をダークグレーにして白文字にする（日付と同じ見た目に統一） */
     .stTextInput > div > div > input,
     .stDateInput > div > div > input,
     div[data-baseweb="select"] > div { 
         background-color: rgba(40, 40, 40, 0.9) !important; 
-        color: #ffffff !important; 
         border: 1px solid rgba(255, 255, 255, 0.4) !important; 
         border-radius: 10px !important; 
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.2) !important; 
-        text-shadow: none !important; /* ぼやける影を消す */
         padding: 10px !important;
     }
     
-    /* 時間選択の表示テキスト */
-    div[data-baseweb="select"] span {
+    /* 時間の文字色（スマホでも絶対に見えるように指定） */
+    .stTextInput > div > div > input,
+    .stDateInput > div > div > input,
+    div[data-baseweb="select"] * {
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        opacity: 1 !important;
         text-shadow: none !important;
     }
 
-    /* カレンダー（日付選択）と時間選択のドロップダウンメニュー */
+    /* カレンダーとドロップダウンメニューの背景 */
     ul[role="listbox"], div[data-baseweb="calendar"] {
         background-color: #333333 !important;
-        border-radius: 10px !important;
     }
     ul[role="listbox"] li {
         color: #ffffff !important;
-        text-shadow: none !important;
+        background-color: #333333 !important;
     }
-    /* 選択肢を触ったときにピンク色にする */
-    ul[role="listbox"] li:hover {
-        background-color: #ff7eb3 !important;
-        color: #ffffff !important;
-    }
-
+    
     .st-emotion-cache-1wmy9hl { background-color: transparent !important; }
     
     @media (max-width: 768px) { 
@@ -174,7 +159,7 @@ elif st.session_state.page == 'home':
 # ページ3：予約画面
 # ==========================================
 elif st.session_state.page == 'reserve':
-    st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>🛍️ Reservation</h1>", unsafe_allow_html=True)
     st.write("ご希望の日にちと時間を、第三希望まで入力してください。")
     st.markdown("<br>", unsafe_allow_html=True)
     
