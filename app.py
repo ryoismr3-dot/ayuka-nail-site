@@ -2,126 +2,90 @@ import streamlit as st
 import datetime
 import base64
 import os
+import smtplib
+from email.mime.text import MIMEText
+import streamlit.components.v1 as components
 
 # --- ページ全体の設定 ---
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- カスタムCSS（明るいパステル、グラスモーフィズム、スマホ対応） ---
+# --- カスタムCSS ---
 st.markdown("""
     <style>
+    /* StreamlitデフォルトのUIを非表示 */
+    header {visibility: hidden !important;}
+    #MainMenu {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    .stDeployButton {display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important;}
+    [class^="viewerBadge"] {display: none !important;}
+
+    /* オリジナルデザイン設定 */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
-
-    .stApp {
-        background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 25%, #c2e9fb 50%, #e0c3fc 75%, #f6d365 100%);
-        background-attachment: fixed;
-        font-family: 'Montserrat', 'Noto Serif JP', serif !important;
-    }
     
-    p, div, span, label {
-        color: #4a4a4a !important;
-        text-shadow: 2px 2px 5px rgba(255,255,255,0.9);
-        font-family: 'Montserrat', 'Noto Serif JP', serif !important;
-        letter-spacing: 1px;
+    .stApp { 
+        background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 25%, #c2e9fb 50%, #e0c3fc 75%, #f6d365 100%); 
+        background-attachment: fixed; 
+        font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
     }
-    
-    h1 {
-        font-family: 'Montserrat', 'Noto Serif JP', serif !important;
-        font-weight: 600 !important;
-        text-align: center;
-        background: -webkit-linear-gradient(45deg, #ff7eb3, #7facfa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        filter: drop-shadow(2px 3px 4px rgba(255,255,255,0.8));
-        letter-spacing: 2px;
-        margin-bottom: 20px;
-        font-size: 3.5rem; /* PC用のサイズ */
+    p, div, span, label { 
+        color: #4a4a4a !important; 
+        text-shadow: 2px 2px 5px rgba(255,255,255,0.9); 
+        font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
+        letter-spacing: 1px; 
     }
-    
-    h2, h3 {
-        color: #6a82fb !important;
-        text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
+    h1 { 
+        font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
+        font-weight: 600 !important; 
+        text-align: center; 
+        background: -webkit-linear-gradient(45deg, #ff7eb3, #7facfa); 
+        -webkit-background-clip: text; 
+        -webkit-text-fill-color: transparent; 
+        filter: drop-shadow(2px 3px 4px rgba(255,255,255,0.8)); 
+        letter-spacing: 2px; 
+        margin-bottom: 20px; 
+        font-size: 3.5rem; 
     }
-    
-    .stButton > button {
-        background: rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: #555555 !important;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 30px;
-        padding: 12px 28px;
-        transition: all 0.4s ease;
-        font-weight: 500;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    h2, h3 { 
+        color: #6a82fb !important; 
+        text-shadow: 2px 2px 4px rgba(255,255,255,0.9); 
     }
-    .stButton > button:hover {
-        background: rgba(255, 255, 255, 0.9);
-        border-color: #ff7eb3;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(255,126,179,0.3);
-        color: #ff7eb3 !important;
+    .stButton > button { 
+        background: rgba(255, 255, 255, 0.4); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px); 
+        color: #555555 !important; 
+        border: 1px solid rgba(255, 255, 255, 0.8); 
+        border-radius: 30px; 
+        padding: 12px 28px; 
+        transition: all 0.4s ease; 
+        font-weight: 500; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
     }
-    
-    .stTextInput > div > div > input {
-        background-color: rgba(255, 255, 255, 0.5);
-        color: #333333;
-        border: 2px solid rgba(255, 255, 255, 0.9);
-        border-radius: 15px;
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
-        padding: 10px;
+    .stButton > button:hover { 
+        background: rgba(255, 255, 255, 0.9); 
+        border-color: #ff7eb3; 
+        transform: translateY(-3px); 
+        box-shadow: 0 8px 25px rgba(255,126,179,0.3); 
+        color: #ff7eb3 !important; 
     }
-    .stTextInput > div > div > input:focus {
-        border-color: #ff7eb3;
-        box-shadow: 0 0 10px rgba(255, 126, 179, 0.3);
+    .stTextInput > div > div > input { 
+        background-color: rgba(255, 255, 255, 0.5); 
+        color: #333333; 
+        border: 2px solid rgba(255, 255, 255, 0.9); 
+        border-radius: 15px; 
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); 
+        padding: 10px; 
     }
-
-    .marquee-wrapper {
-        width: 100%;
-        overflow: hidden;
-        padding: 25px 0;
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-    }
-    .marquee-content {
-        display: flex;
-        width: max-content;
-        animation: marquee 30s linear infinite;
-    }
-    .marquee-content img {
-        height: 250px; /* PC用画像サイズ */
-        object-fit: cover;
-        margin: 0 15px;
-        border-radius: 12px;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-        transition: transform 0.3s ease;
-    }
-    .marquee-content img:hover {
-        transform: scale(1.05);
-    }
-    .marquee-content:hover {
-        animation-play-state: paused;
-    }
-    @keyframes marquee {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
+    .stTextInput > div > div > input:focus { 
+        border-color: #ff7eb3; 
+        box-shadow: 0 0 10px rgba(255, 126, 179, 0.3); 
     }
     .st-emotion-cache-1wmy9hl { background-color: transparent !important; }
-
-    /* ==========================================
-       スマホ用のスタイル（画面幅が768px以下の場合に適用）
-       ========================================== */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 2.2rem !important; /* スマホではタイトルを小さく */
-            margin-top: 2vh !important;
-        }
-        .marquee-content img {
-            height: 180px; /* スマホでは画像サイズを少し小さく */
-            margin: 0 8px;
-        }
+    
+    @media (max-width: 768px) { 
+        h1 { font-size: 2.2rem !important; margin-top: 2vh !important; } 
+        .block-container { padding-top: 2rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -136,10 +100,9 @@ def change_page(page_name):
 # ページ1：ログイン画面
 # ==========================================
 if st.session_state.page == 'login':
-    st.markdown("<h1 style='margin-top: 10vh;'>✨ Ayuka's Nail Site ✨</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-top: 5vh;'>✨ Ayuka's Nail Site ✨</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Please enter your password</p>", unsafe_allow_html=True)
     
-    # スマホでも崩れないようにカラム設定を調整
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         st.write("")
@@ -160,7 +123,6 @@ elif st.session_state.page == 'home':
     st.markdown("<p style='text-align: center; font-size: 1.1rem;'>ご希望のメニューを選択してください</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
-    # スマホでボタンが縦に綺麗に並ぶように調整
     if st.button("📅 ネイルの予約へ", use_container_width=True):
         change_page('reserve')
         st.rerun()
@@ -174,53 +136,153 @@ elif st.session_state.page == 'home':
 # ==========================================
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
-    st.write("ご希望の日にちと時間を選択してください。")
+    st.write("ご希望の日にちと時間を、第三希望まで入力してください。")
     st.markdown("<br>", unsafe_allow_html=True)
     
-    selected_date = st.date_input("日付を選択", datetime.date.today())
     time_options = [f"{hour:02d}:00" for hour in range(12, 21)]
-    selected_time = st.selectbox("時間を選択", time_options)
+    today = datetime.date.today()
+    
+    st.markdown("**💅 第一希望**")
+    col1, col2 = st.columns(2)
+    with col1: date_1 = st.date_input("日付 (第一希望)", today, key="date1")
+    with col2: time_1 = st.selectbox("時間 (第一希望)", time_options, key="time1")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown("**💅 第二希望**")
+    col3, col4 = st.columns(2)
+    with col3: date_2 = st.date_input("日付 (第二希望)", today + datetime.timedelta(days=1), key="date2")
+    with col4: time_2 = st.selectbox("時間 (第二希望)", time_options, key="time2")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown("**💅 第三希望**")
+    col5, col6 = st.columns(2)
+    with col5: date_3 = st.date_input("日付 (第三希望)", today + datetime.timedelta(days=2), key="date3")
+    with col6: time_3 = st.selectbox("時間 (第三希望)", time_options, key="time3")
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    st.write("お客様情報をご入力ください。")
+    customer_name = st.text_input("お名前")
+    customer_email = st.text_input("メールアドレス")
     
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("予約を確定する", use_container_width=True):
-        st.success(f"🎉 {selected_date.strftime('%Y年%m月%d日')} {selected_time} にて仮予約を受け付けました。")
-        
+        if not customer_name or not customer_email:
+            st.warning("⚠️ お名前とメールアドレスを入力してください。")
+        else:
+            try:
+                sender_email = st.secrets["email"]["address"]
+                sender_password = st.secrets["email"]["password"]
+                
+                subject = "【Ayuka's Nail】仮予約を受け付けました"
+                body = f"""{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【第一希望】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n【第二希望】 {date_2.strftime('%Y年%m月%d日')} {time_2}\n【第三希望】 {date_3.strftime('%Y年%m月%d日')} {time_3}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"""
+                msg = MIMEText(body)
+                msg["Subject"] = subject
+                msg["From"] = sender_email
+                msg["To"] = customer_email
+                
+                server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+                server.quit()
+                
+                st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
+                
+            except Exception as e:
+                st.error("メールの送信に失敗しました。管理者のメール設定（Secrets）を確認してください。")
+
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("← ホームに戻る"):
         change_page('home')
         st.rerun()
 
 # ==========================================
-# ページ4：ギャラリー
+# ページ4：ギャラリー（Swiper.jsによる高機能カルーセル）
 # ==========================================
 elif st.session_state.page == 'gallery':
     st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
-    st.write("最新のネイルデザイン。")
+    st.write("最新のネイルデザイン。（スマホでは指でスワイプして動かせます）")
     
-    def get_image_tags():
-        image_html = ""
+    # Swiperに埋め込むHTML/JSを生成する関数
+    def get_swiper_html():
+        slides_html = ""
         for i in range(1, 10):
             file_name = f"nail{i}.png"
             if os.path.exists(file_name):
                 with open(file_name, "rb") as image_file:
                     encoded = base64.b64encode(image_file.read()).decode()
-                    image_html += f'<img src="data:image/png;base64,{encoded}">'
+                    img_src = f"data:image/png;base64,{encoded}"
             else:
-                image_html += f'<img src="https://via.placeholder.com/200x250/ffffff/ff7eb3?text=Nail+{i}">'
-        return image_html
+                img_src = f"https://via.placeholder.com/200x250/ffffff/ff7eb3?text=Nail+{i}"
+            slides_html += f'<div class="swiper-slide"><img src="{img_src}"></div>'
+            
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+            <style>
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    background: transparent;
+                    overflow: hidden;
+                }}
+                .swiper {{
+                    width: 100%;
+                    padding: 20px 0;
+                }}
+                /* スクロールを完全に一定の等速（linear）にする魔法のCSS */
+                .swiper-wrapper {{
+                    transition-timing-function: linear !important;
+                }}
+                .swiper-slide {{
+                    width: auto;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }}
+                .swiper-slide img {{
+                    height: 250px;
+                    object-fit: cover;
+                    border-radius: 15px;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+                }}
+                @media (max-width: 768px) {{
+                    .swiper-slide img {{
+                        height: 180px;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper">
+                    {slides_html}
+                </div>
+            </div>
 
-    images_tags = get_image_tags()
-    
-    carousel_html = f"""
-    <div class="marquee-wrapper">
-        <div class="marquee-content">
-            {images_tags}
-            {images_tags}
-        </div>
-    </div>
-    """
-    
-    st.markdown(carousel_html, unsafe_allow_html=True)
+            <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+            <script>
+                const swiper = new Swiper('.mySwiper', {{
+                    loop: true,                 // 無限ループ
+                    slidesPerView: 'auto',       // 画像のサイズに合わせる
+                    spaceBetween: 20,           // 画像同士の間隔
+                    speed: 6000,                // 自動スクロールの速度（数字が大きいほどゆっくり）
+                    allowTouchMove: true,       // スマホでの手動スワイプを許可
+                    autoplay: {{
+                        delay: 0,               // 止まらずにすぐ動く
+                        disableOnInteraction: false, // 手で触っても自動再生を強制終了しない設定
+                    }},
+                }});
+            </script>
+        </body>
+        </html>
+        """
+        return html_content
+
+    # Streamlitに高機能なHTMLコンポーネントを埋め込む
+    components.html(get_swiper_html(), height=300)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("← ホームに戻る"):
