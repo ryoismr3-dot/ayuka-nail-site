@@ -12,15 +12,24 @@ st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sideba
 # --- カスタムCSS ---
 st.markdown("""
     <style>
-    /* StreamlitデフォルトのUIを非表示 */
+    /* ==========================================
+       StreamlitデフォルトUIとCloudバッジを完全に非表示
+       ========================================== */
     header {visibility: hidden !important;}
     #MainMenu {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important;}
-    [class^="viewerBadge"] {display: none !important;}
-
-    /* オリジナルデザイン設定 */
+    
+    /* Streamlit Cloud 右下のロゴを完全に消す強力な設定 */
+    iframe[title="Streamlit Community Cloud Badge"] {display: none !important;}
+    a[href*="streamlit.io/cloud"] {display: none !important;}
+    div[class^="viewerBadge"] {display: none !important;}
+    .viewerBadge_container__1QSob, .viewerBadge_link__1S137 {display: none !important;}
+    
+    /* ==========================================
+       オリジナルデザイン設定
+       ========================================== */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
     
     .stApp { 
@@ -28,12 +37,15 @@ st.markdown("""
         background-attachment: fixed; 
         font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
     }
-    p, div, span, label { 
+    
+    /* 以前のdiv,spanへの一括指定を外し、文字がぼやけるバグを修正 */
+    p, label { 
         color: #4a4a4a !important; 
         text-shadow: 2px 2px 5px rgba(255,255,255,0.9); 
         font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
         letter-spacing: 1px; 
     }
+    
     h1 { 
         font-family: 'Montserrat', 'Noto Serif JP', serif !important; 
         font-weight: 600 !important; 
@@ -50,6 +62,7 @@ st.markdown("""
         color: #6a82fb !important; 
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9); 
     }
+    
     .stButton > button { 
         background: rgba(255, 255, 255, 0.4); 
         backdrop-filter: blur(8px); 
@@ -69,18 +82,44 @@ st.markdown("""
         box-shadow: 0 8px 25px rgba(255,126,179,0.3); 
         color: #ff7eb3 !important; 
     }
-    .stTextInput > div > div > input { 
-        background-color: rgba(255, 255, 255, 0.5); 
-        color: #333333; 
-        border: 2px solid rgba(255, 255, 255, 0.9); 
-        border-radius: 15px; 
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); 
-        padding: 10px; 
+    
+    /* ==========================================
+       入力欄（パスワード、日付、時間）の統一デザイン
+       ========================================== */
+    /* 背景をダークグレーにして白文字にする（日付と同じ見た目に統一） */
+    .stTextInput > div > div > input,
+    .stDateInput > div > div > input,
+    div[data-baseweb="select"] > div { 
+        background-color: rgba(40, 40, 40, 0.9) !important; 
+        color: #ffffff !important; 
+        border: 1px solid rgba(255, 255, 255, 0.4) !important; 
+        border-radius: 10px !important; 
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.2) !important; 
+        text-shadow: none !important; /* ぼやける影を消す */
+        padding: 10px !important;
     }
-    .stTextInput > div > div > input:focus { 
-        border-color: #ff7eb3; 
-        box-shadow: 0 0 10px rgba(255, 126, 179, 0.3); 
+    
+    /* 時間選択の表示テキスト */
+    div[data-baseweb="select"] span {
+        color: #ffffff !important;
+        text-shadow: none !important;
     }
+
+    /* カレンダー（日付選択）と時間選択のドロップダウンメニュー */
+    ul[role="listbox"], div[data-baseweb="calendar"] {
+        background-color: #333333 !important;
+        border-radius: 10px !important;
+    }
+    ul[role="listbox"] li {
+        color: #ffffff !important;
+        text-shadow: none !important;
+    }
+    /* 選択肢を触ったときにピンク色にする */
+    ul[role="listbox"] li:hover {
+        background-color: #ff7eb3 !important;
+        color: #ffffff !important;
+    }
+
     .st-emotion-cache-1wmy9hl { background-color: transparent !important; }
     
     @media (max-width: 768px) { 
@@ -197,13 +236,12 @@ elif st.session_state.page == 'reserve':
         st.rerun()
 
 # ==========================================
-# ページ4：ギャラリー（Swiper.jsによる高機能カルーセル）
+# ページ4：ギャラリー
 # ==========================================
 elif st.session_state.page == 'gallery':
     st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
     st.write("最新のネイルデザイン。（スマホでは指でスワイプして動かせます）")
     
-    # Swiperに埋め込むHTML/JSを生成する関数
     def get_swiper_html():
         slides_html = ""
         for i in range(1, 10):
@@ -222,37 +260,12 @@ elif st.session_state.page == 'gallery':
         <head>
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
             <style>
-                body {{
-                    margin: 0;
-                    padding: 0;
-                    background: transparent;
-                    overflow: hidden;
-                }}
-                .swiper {{
-                    width: 100%;
-                    padding: 20px 0;
-                }}
-                /* スクロールを完全に一定の等速（linear）にする魔法のCSS */
-                .swiper-wrapper {{
-                    transition-timing-function: linear !important;
-                }}
-                .swiper-slide {{
-                    width: auto;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                }}
-                .swiper-slide img {{
-                    height: 250px;
-                    object-fit: cover;
-                    border-radius: 15px;
-                    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-                }}
-                @media (max-width: 768px) {{
-                    .swiper-slide img {{
-                        height: 180px;
-                    }}
-                }}
+                body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; }}
+                .swiper {{ width: 100%; padding: 20px 0; }}
+                .swiper-wrapper {{ transition-timing-function: linear !important; }}
+                .swiper-slide {{ width: auto; display: flex; justify-content: center; align-items: center; }}
+                .swiper-slide img {{ height: 250px; object-fit: cover; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }}
+                @media (max-width: 768px) {{ .swiper-slide img {{ height: 180px; }} }}
             </style>
         </head>
         <body>
@@ -261,18 +274,17 @@ elif st.session_state.page == 'gallery':
                     {slides_html}
                 </div>
             </div>
-
             <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
             <script>
                 const swiper = new Swiper('.mySwiper', {{
-                    loop: true,                 // 無限ループ
-                    slidesPerView: 'auto',       // 画像のサイズに合わせる
-                    spaceBetween: 20,           // 画像同士の間隔
-                    speed: 6000,                // 自動スクロールの速度（数字が大きいほどゆっくり）
-                    allowTouchMove: true,       // スマホでの手動スワイプを許可
+                    loop: true,                 
+                    slidesPerView: 'auto',       
+                    spaceBetween: 20,           
+                    speed: 6000,                
+                    allowTouchMove: true,       
                     autoplay: {{
-                        delay: 0,               // 止まらずにすぐ動く
-                        disableOnInteraction: false, // 手で触っても自動再生を強制終了しない設定
+                        delay: 0,               
+                        disableOnInteraction: false, 
                     }},
                 }});
             </script>
@@ -281,7 +293,6 @@ elif st.session_state.page == 'gallery':
         """
         return html_content
 
-    # Streamlitに高機能なHTMLコンポーネントを埋め込む
     components.html(get_swiper_html(), height=300)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
