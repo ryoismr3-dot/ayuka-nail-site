@@ -1,2 +1,3 @@
-gspread
-oauth2client
+streamlit
+google-api-python-client
+google-auth
