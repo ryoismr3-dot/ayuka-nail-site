@@ -6,28 +6,22 @@ import smtplib
 from email.mime.text import MIMEText
 import streamlit.components.v1 as components
 import json
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 # --- ページ全体の設定 ---
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- データ管理用の関数 ---
+# --- データ管理用の関数（手動カレンダーが不要になったため、お知らせのみ保存） ---
 DATA_FILE = 'data.json'
-
-def get_default_calendar_day():
-    return {f"{h:02d}:00": "〇" for h in range(8, 21)}
 
 def load_data():
     if not os.path.exists(DATA_FILE):
-        return {
-            "notice": {"text": "", "is_active": False},
-            "calendar": {} 
-        }
+        return {"notice": {"text": "", "is_active": False}}
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        if "calendar" in data and len(data["calendar"]) > 0:
-            first_key = list(data["calendar"].keys())[0]
-            if ":" in first_key and data["calendar"][first_key] in ["〇", "×"]:
-                data["calendar"] = {}
+        if "notice" not in data:
+            return {"notice": {"text": "", "is_active": False}}
         return data
 
 def save_data(data):
@@ -111,17 +105,12 @@ st.markdown("""
         border-color: #ff7eb3;
         box-shadow: 0 0 10px rgba(255, 126, 179, 0.3);
     }
-
-    /* ▼▼ 今回の追加・修正CSS ▼▼ */
-    /* 1. パスワードの「目のアイコン（visibility）」の文字化けを直す */
     button span {
         font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
         text-shadow: none !important;
         letter-spacing: normal !important;
         color: #777777 !important;
     }
-    
-    /* 2. カレンダーと時間選択を強制的に白背景にして見やすくする */
     div[data-baseweb="popover"] > div {
         background-color: #ffffff !important;
         border-radius: 10px;
@@ -131,7 +120,6 @@ st.markdown("""
         color: #333333 !important;
         text-shadow: none !important;
     }
-    /* ▲▲ 今回の追加・修正CSS ここまで ▲▲ */
 
     @media (max-width: 768px) {
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
@@ -167,6 +155,7 @@ if st.session_state.page == 'login':
 # ==========================================
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
+    st.info("💡 カレンダーの〇×管理は自動化されたため、ここでの手動設定は不要になりました！予定の変更はCahoカレンダーで行ってください。")
     
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
@@ -176,37 +165,6 @@ elif st.session_state.page == 'admin_dashboard':
         site_data["notice"] = {"text": notice_text, "is_active": is_active}
         save_data(site_data)
         st.success("お知らせ設定を保存しました！")
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    st.markdown("### 📅 日別予約カレンダー設定 (8:00〜20:00)")
-    st.write("設定を変更したい「日付」を選んでください。")
-    
-    today_admin = datetime.date.today()
-    edit_date = st.date_input("編集する日付を選択", today_admin, min_value=today_admin, max_value=today_admin + datetime.timedelta(days=30))
-    date_str = edit_date.strftime("%Y-%m-%d")
-    
-    if date_str not in site_data["calendar"]:
-        site_data["calendar"][date_str] = get_default_calendar_day()
-        
-    current_day_data = site_data["calendar"][date_str]
-    
-    st.markdown(f"**【 {edit_date.strftime('%Y年%m月%d日')} の空き状況 】**")
-    cal_col1, cal_col2 = st.columns(2)
-    updated_calendar_day = {}
-    times = list(current_day_data.keys())
-    half = len(times) // 2
-    
-    for i, t in enumerate(times):
-        current_val = current_day_data[t]
-        with cal_col1 if i < half else cal_col2:
-            updated_calendar_day[t] = st.radio(f"{t}", ["〇", "×"], index=0 if current_val == "〇" else 1, horizontal=True, key=f"cal_{date_str}_{t}")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("💾 この日の設定を保存する", use_container_width=True):
-        site_data["calendar"][date_str] = updated_calendar_day
-        save_data(site_data)
-        st.success(f"{edit_date.strftime('%Y年%m月%d日')} の設定を保存しました！")
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     if st.button("← ログアウト"):
@@ -235,7 +193,7 @@ elif st.session_state.page == 'home':
         st.rerun()
 
 # ==========================================
-# ページ4：予約画面
+# ページ4：予約画面（Googleカレンダー自動連携）
 # ==========================================
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
@@ -244,14 +202,59 @@ elif st.session_state.page == 'reserve':
 
     today = datetime.date.today()
     max_date = today + datetime.timedelta(days=30) 
+    JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
+    @st.cache_data(ttl=60) # 1分間データを記憶して読み込みを高速化
     def get_available_times(selected_date):
-        d_str = selected_date.strftime("%Y-%m-%d")
-        if d_str not in site_data["calendar"]:
-            day_data = get_default_calendar_day() 
-        else:
-            day_data = site_data["calendar"][d_str]
-        return [t for t, status in day_data.items() if status == "〇"]
+        try:
+            creds_json = st.secrets["google_credentials"]
+            creds_dict = json.loads(creds_json)
+            creds = service_account.Credentials.from_service_account_info(
+                creds_dict, scopes=['https://www.googleapis.com/auth/calendar.readonly']
+            )
+            service = build('calendar', 'v3', credentials=creds)
+            calendar_id = st.secrets["calendar"]["id"]
+
+            time_min = datetime.datetime.combine(selected_date, datetime.time.min, tzinfo=JST).isoformat()
+            time_max = datetime.datetime.combine(selected_date, datetime.time.max, tzinfo=JST).isoformat()
+
+            events_result = service.events().list(
+                calendarId=calendar_id, timeMin=time_min, timeMax=time_max,
+                singleEvents=True, orderBy='startTime'
+            ).execute()
+            events = events_result.get('items', [])
+
+            available_slots = []
+            for hour in range(8, 21):
+                slot_start = datetime.datetime.combine(selected_date, datetime.time(hour, 0), tzinfo=JST)
+                slot_end = slot_start + datetime.timedelta(hours=1)
+                is_overlap = False
+
+                for event in events:
+                    start_str = event['start'].get('dateTime', event['start'].get('date'))
+                    end_str = event['end'].get('dateTime', event['end'].get('date'))
+
+                    if len(start_str) == 10:
+                        is_overlap = True
+                        break
+
+                    if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
+                    if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
+                    
+                    event_start = datetime.datetime.fromisoformat(start_str)
+                    event_end = datetime.datetime.fromisoformat(end_str)
+
+                    if slot_start < event_end and slot_end > event_start:
+                        is_overlap = True
+                        break
+
+                if not is_overlap:
+                    available_slots.append(f"{hour:02d}:00")
+
+            return available_slots
+        except Exception as e:
+            st.error(f"⚠️ カレンダーの読み込みに失敗しました。設定を確認してください。({e})")
+            return []
 
     st.markdown("**💅 第一希望**")
     col1, col2 = st.columns(2)
