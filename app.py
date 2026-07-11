@@ -13,7 +13,6 @@ st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sideba
 # --- データ管理用の関数 ---
 DATA_FILE = 'data.json'
 
-# デフォルトの1日の営業時間（8:00〜20:00）
 def get_default_calendar_day():
     return {f"{h:02d}:00": "〇" for h in range(8, 21)}
 
@@ -21,11 +20,10 @@ def load_data():
     if not os.path.exists(DATA_FILE):
         return {
             "notice": {"text": "", "is_active": False},
-            "calendar": {} # 日付ごとのデータを保存するように変更
+            "calendar": {} 
         }
     with open(DATA_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        # 古いフォーマット（日別になっていないデータ）が残っていたらリセットしてエラーを防ぐ
         if "calendar" in data and len(data["calendar"]) > 0:
             first_key = list(data["calendar"].keys())[0]
             if ":" in first_key and data["calendar"][first_key] in ["〇", "×"]:
@@ -52,7 +50,7 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important;}
-
+    
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
 
     .stApp {
@@ -103,7 +101,7 @@ st.markdown("""
     }
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.5);
-        color: #333333;
+        color: #333333 !important;
         border: 2px solid rgba(255, 255, 255, 0.9);
         border-radius: 15px;
         box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
@@ -113,6 +111,28 @@ st.markdown("""
         border-color: #ff7eb3;
         box-shadow: 0 0 10px rgba(255, 126, 179, 0.3);
     }
+
+    /* ▼▼ 今回の追加・修正CSS ▼▼ */
+    /* 1. パスワードの「目のアイコン（visibility）」の文字化けを直す */
+    button span {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        text-shadow: none !important;
+        letter-spacing: normal !important;
+        color: #777777 !important;
+    }
+    
+    /* 2. カレンダーと時間選択を強制的に白背景にして見やすくする */
+    div[data-baseweb="popover"] > div {
+        background-color: #ffffff !important;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+    }
+    div[data-baseweb="calendar"] *, ul[role="listbox"] * {
+        color: #333333 !important;
+        text-shadow: none !important;
+    }
+    /* ▲▲ 今回の追加・修正CSS ここまで ▲▲ */
+
     @media (max-width: 768px) {
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
         .block-container { padding-top: 2rem !important; }
@@ -147,37 +167,36 @@ if st.session_state.page == 'login':
 # ==========================================
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
-
+    
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
     is_active = st.toggle("お知らせをユーザーサイトに表示する", value=site_data["notice"]["is_active"])
-
+    
     if st.button("💾 お知らせを保存する", use_container_width=True):
         site_data["notice"] = {"text": notice_text, "is_active": is_active}
         save_data(site_data)
         st.success("お知らせ設定を保存しました！")
 
     st.markdown("<hr>", unsafe_allow_html=True)
-
-    # --- 日別カレンダーの編集 ---
+    
     st.markdown("### 📅 日別予約カレンダー設定 (8:00〜20:00)")
     st.write("設定を変更したい「日付」を選んでください。")
-
+    
     today_admin = datetime.date.today()
     edit_date = st.date_input("編集する日付を選択", today_admin, min_value=today_admin, max_value=today_admin + datetime.timedelta(days=30))
     date_str = edit_date.strftime("%Y-%m-%d")
-
+    
     if date_str not in site_data["calendar"]:
         site_data["calendar"][date_str] = get_default_calendar_day()
-
+        
     current_day_data = site_data["calendar"][date_str]
-
+    
     st.markdown(f"**【 {edit_date.strftime('%Y年%m月%d日')} の空き状況 】**")
     cal_col1, cal_col2 = st.columns(2)
     updated_calendar_day = {}
     times = list(current_day_data.keys())
     half = len(times) // 2
-
+    
     for i, t in enumerate(times):
         current_val = current_day_data[t]
         with cal_col1 if i < half else cal_col2:
@@ -187,7 +206,7 @@ elif st.session_state.page == 'admin_dashboard':
     if st.button("💾 この日の設定を保存する", use_container_width=True):
         site_data["calendar"][date_str] = updated_calendar_day
         save_data(site_data)
-        st.success(f"{edit_date.strftime('%Y年%m月%d日')} の設定を保存しました！ユーザーサイトに即時反映されます。")
+        st.success(f"{edit_date.strftime('%Y年%m月%d日')} の設定を保存しました！")
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     if st.button("← ログアウト"):
@@ -200,8 +219,8 @@ elif st.session_state.page == 'admin_dashboard':
 elif st.session_state.page == 'home':
     notice = site_data["notice"]
     if notice["is_active"] and notice["text"]:
-        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔")
-        st.info(f"**【お知らせ】**\n\n{notice['text']}")
+        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔") 
+        st.info(f"**【お知らせ】**\n\n{notice['text']}") 
 
     st.markdown("<h1 style='margin-top: 2vh;'>Welcome to Ayuka's Nail</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1rem;'>ご希望のメニューを選択してください</p>", unsafe_allow_html=True)
@@ -224,12 +243,12 @@ elif st.session_state.page == 'reserve':
     st.markdown("<br>", unsafe_allow_html=True)
 
     today = datetime.date.today()
-    max_date = today + datetime.timedelta(days=30)
+    max_date = today + datetime.timedelta(days=30) 
 
     def get_available_times(selected_date):
         d_str = selected_date.strftime("%Y-%m-%d")
         if d_str not in site_data["calendar"]:
-            day_data = get_default_calendar_day()
+            day_data = get_default_calendar_day() 
         else:
             day_data = site_data["calendar"][d_str]
         return [t for t, status in day_data.items() if status == "〇"]
@@ -237,7 +256,7 @@ elif st.session_state.page == 'reserve':
     st.markdown("**💅 第一希望**")
     col1, col2 = st.columns(2)
     with col1: date_1 = st.date_input("日付 (第一希望)", today, min_value=today, max_value=max_date, key="date1")
-    with col2:
+    with col2: 
         times_1 = get_available_times(date_1)
         time_1 = st.selectbox("時間 (第一希望)", times_1 if times_1 else ["現在、空きがありません"], key="time1")
 
@@ -245,7 +264,7 @@ elif st.session_state.page == 'reserve':
     col3, col4 = st.columns(2)
     default_date_2 = today + datetime.timedelta(days=1) if (today + datetime.timedelta(days=1)) <= max_date else max_date
     with col3: date_2 = st.date_input("日付 (第二希望)", default_date_2, min_value=today, max_value=max_date, key="date2")
-    with col4:
+    with col4: 
         times_2 = get_available_times(date_2)
         time_2 = st.selectbox("時間 (第二希望)", times_2 if times_2 else ["現在、空きがありません"], key="time2")
 
@@ -253,7 +272,7 @@ elif st.session_state.page == 'reserve':
     col5, col6 = st.columns(2)
     default_date_3 = today + datetime.timedelta(days=2) if (today + datetime.timedelta(days=2)) <= max_date else max_date
     with col5: date_3 = st.date_input("日付 (第三希望)", default_date_3, min_value=today, max_value=max_date, key="date3")
-    with col6:
+    with col6: 
         times_3 = get_available_times(date_3)
         time_3 = st.selectbox("時間 (第三希望)", times_3 if times_3 else ["現在、空きがありません"], key="time3")
 
@@ -279,7 +298,6 @@ elif st.session_state.page == 'reserve':
                 msg["Subject"] = subject
                 msg["From"] = sender_email
                 msg["To"] = customer_email
-                # ↓ここが追加した部分です！管理者へBccで送信します
                 msg["Bcc"] = "mmirukoko@gmail.com"
 
                 server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
