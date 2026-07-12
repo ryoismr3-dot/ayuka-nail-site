@@ -9,7 +9,6 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
 DATA_FILE = 'data.json'
@@ -34,7 +33,6 @@ if 'page' not in st.session_state:
 
 def change_page(page_name):
     st.session_state.page = page_name
-
 
 st.markdown("""
     <style>
@@ -110,15 +108,6 @@ st.markdown("""
         letter-spacing: normal !important;
         color: #777777 !important;
     }
-    div[data-baseweb="popover"] > div {
-        background-color: #ffffff !important;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
-    }
-    div[data-baseweb="calendar"] *, ul[role="listbox"] * {
-        color: #333333 !important;
-        text-shadow: none !important;
-    }
     div[role="radiogroup"] label {
         margin-right: 20px;
     }
@@ -127,10 +116,19 @@ st.markdown("""
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
         .block-container { padding-top: 2rem !important; }
     }
+
+    div[data-baseweb="popover"] > div {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+    }
+    div[data-baseweb="calendar"] *, ul[role="listbox"] * {
+        color: #000000 !important;
+        text-shadow: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
-
-
 
 if st.session_state.page == 'login':
     st.markdown("<h1 style='margin-top: 5vh;'>✨ Ayuka's Nail Site ✨</h1>", unsafe_allow_html=True)
@@ -149,7 +147,6 @@ if st.session_state.page == 'login':
                 st.rerun()
             else:
                 st.error("パスワードが違います。")
-
 
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
@@ -218,7 +215,6 @@ elif st.session_state.page == 'reserve':
 
             available_slots = []
             
-          
             day_block_start = None
             day_block_end = None
             is_all_day = False
@@ -227,7 +223,7 @@ elif st.session_state.page == 'reserve':
                 start_str = event['start'].get('dateTime', event['start'].get('date'))
                 end_str = event['end'].get('dateTime', event['end'].get('date'))
 
-                if len(start_str) == 10: 
+                if len(start_str) == 10:
                     is_all_day = True
                     break
 
@@ -237,13 +233,11 @@ elif st.session_state.page == 'reserve':
                 event_start = datetime.datetime.fromisoformat(start_str)
                 event_end = datetime.datetime.fromisoformat(end_str)
 
-          
                 if day_block_start is None or event_start < day_block_start:
                     day_block_start = event_start
                 if day_block_end is None or event_end > day_block_end:
                     day_block_end = event_end
 
-     
             current_dt = datetime.datetime.combine(selected_date, datetime.time(8, 0), tzinfo=JST)
             end_dt = datetime.datetime.combine(selected_date, datetime.time(22, 0), tzinfo=JST)
 
@@ -255,17 +249,15 @@ elif st.session_state.page == 'reserve':
                 if is_all_day:
                     is_overlap = True
                 elif day_block_start and day_block_end:
-              
                     cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
                     buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
                     
-               
                     if slot_start > cutoff_time and slot_start < buffered_block_end:
                         is_overlap = True
 
                 if not is_overlap:
-                    available_slots.append(slot_start.strftime("%H:%M")) # "08:30", "09:00" のような形式で追加
-             
+                    available_slots.append(slot_start.strftime("%H:%M"))
+                
                 current_dt += datetime.timedelta(minutes=30)
 
             return available_slots
