@@ -9,10 +9,9 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# --- ページ全体の設定 ---
+
 st.set_page_config(page_title="Ayuka's nail site", layout="wide", initial_sidebar_state="collapsed")
 
-# --- データ管理用の関数（手動カレンダーが不要になったため、お知らせのみ保存） ---
 DATA_FILE = 'data.json'
 
 def load_data():
@@ -36,7 +35,7 @@ if 'page' not in st.session_state:
 def change_page(page_name):
     st.session_state.page = page_name
 
-# --- カスタムCSS ---
+
 st.markdown("""
     <style>
     header {visibility: hidden !important;}
@@ -120,6 +119,9 @@ st.markdown("""
         color: #333333 !important;
         text-shadow: none !important;
     }
+    div[role="radiogroup"] label {
+        margin-right: 20px;
+    }
 
     @media (max-width: 768px) {
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
@@ -129,9 +131,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ==========================================
-# ページ1：ログイン画面
-# ==========================================
+
 if st.session_state.page == 'login':
     st.markdown("<h1 style='margin-top: 5vh;'>✨ Ayuka's Nail Site ✨</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Please enter your password</p>", unsafe_allow_html=True)
@@ -150,9 +150,7 @@ if st.session_state.page == 'login':
             else:
                 st.error("パスワードが違います。")
 
-# ==========================================
-# ページ2：管理者ダッシュボード
-# ==========================================
+
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
     st.info("💡 カレンダーの〇×管理は自動化されたため、ここでの手動設定は不要になりました！予定の変更はCahoカレンダーで行ってください。")
@@ -171,9 +169,6 @@ elif st.session_state.page == 'admin_dashboard':
         change_page('login')
         st.rerun()
 
-# ==========================================
-# ページ3：ホーム画面
-# ==========================================
 elif st.session_state.page == 'home':
     notice = site_data["notice"]
     if notice["is_active"] and notice["text"]:
@@ -192,22 +187,19 @@ elif st.session_state.page == 'home':
         change_page('gallery')
         st.rerun()
 
-# ==========================================
-# ページ4：予約画面（Googleカレンダー自動連携）
-# ==========================================
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
-    st.write("ご希望の日にちと時間を、第三希望まで入力してください。（本日より1ヶ月先まで選択可能です）")
+    st.write("ご希望のメニューと日時を入力してください。（本日より1ヶ月先まで選択可能です）")
     st.markdown("<br>", unsafe_allow_html=True)
 
     today = datetime.date.today()
     max_date = today + datetime.timedelta(days=30) 
     JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
-    @st.cache_data(ttl=60) # 1分間データを記憶して読み込みを高速化
+    @st.cache_data(ttl=60)
     def get_available_times(selected_date):
         try:
-            creds_json = st.secrets["google_credentials"]
+            creds_json = st.secrets["calendar"]["google_credentials"]
             creds_dict = json.loads(creds_json)
             creds = service_account.Credentials.from_service_account_info(
                 creds_dict, scopes=['https://www.googleapis.com/auth/calendar.readonly']
@@ -225,59 +217,71 @@ elif st.session_state.page == 'reserve':
             events = events_result.get('items', [])
 
             available_slots = []
-            for hour in range(8, 21):
-                slot_start = datetime.datetime.combine(selected_date, datetime.time(hour, 0), tzinfo=JST)
+            
+          
+            day_block_start = None
+            day_block_end = None
+            is_all_day = False
+
+            for event in events:
+                start_str = event['start'].get('dateTime', event['start'].get('date'))
+                end_str = event['end'].get('dateTime', event['end'].get('date'))
+
+                if len(start_str) == 10: 
+                    is_all_day = True
+                    break
+
+                if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
+                if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
+                
+                event_start = datetime.datetime.fromisoformat(start_str)
+                event_end = datetime.datetime.fromisoformat(end_str)
+
+          
+                if day_block_start is None or event_start < day_block_start:
+                    day_block_start = event_start
+                if day_block_end is None or event_end > day_block_end:
+                    day_block_end = event_end
+
+     
+            current_dt = datetime.datetime.combine(selected_date, datetime.time(8, 0), tzinfo=JST)
+            end_dt = datetime.datetime.combine(selected_date, datetime.time(22, 0), tzinfo=JST)
+
+            while current_dt <= end_dt:
+                slot_start = current_dt
                 slot_end = slot_start + datetime.timedelta(hours=1)
                 is_overlap = False
 
-                for event in events:
-                    start_str = event['start'].get('dateTime', event['start'].get('date'))
-                    end_str = event['end'].get('dateTime', event['end'].get('date'))
-
-                    if len(start_str) == 10:
-                        is_overlap = True
-                        break
-
-                    if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
-                    if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
+                if is_all_day:
+                    is_overlap = True
+                elif day_block_start and day_block_end:
+              
+                    cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
+                    buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
                     
-                    event_start = datetime.datetime.fromisoformat(start_str)
-                    event_end = datetime.datetime.fromisoformat(end_str)
-
-                    if slot_start < event_end and slot_end > event_start:
+               
+                    if slot_start > cutoff_time and slot_start < buffered_block_end:
                         is_overlap = True
-                        break
 
                 if not is_overlap:
-                    available_slots.append(f"{hour:02d}:00")
+                    available_slots.append(slot_start.strftime("%H:%M")) # "08:30", "09:00" のような形式で追加
+             
+                current_dt += datetime.timedelta(minutes=30)
 
             return available_slots
         except Exception as e:
             st.error(f"⚠️ カレンダーの読み込みに失敗しました。設定を確認してください。({e})")
             return []
 
-    st.markdown("**💅 第一希望**")
+    st.markdown("**💅 ご希望のメニュー**")
+    menu_choice = st.radio("施術箇所を選択してください", ["ハンドネイル (手)", "フットネイル (足)"], horizontal=True)
+
+    st.markdown("<br>**💅 ご希望の日時**", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
-    with col1: date_1 = st.date_input("日付 (第一希望)", today, min_value=today, max_value=max_date, key="date1")
+    with col1: date_1 = st.date_input("日付", today, min_value=today, max_value=max_date, key="date1")
     with col2: 
         times_1 = get_available_times(date_1)
-        time_1 = st.selectbox("時間 (第一希望)", times_1 if times_1 else ["現在、空きがありません"], key="time1")
-
-    st.markdown("**💅 第二希望**")
-    col3, col4 = st.columns(2)
-    default_date_2 = today + datetime.timedelta(days=1) if (today + datetime.timedelta(days=1)) <= max_date else max_date
-    with col3: date_2 = st.date_input("日付 (第二希望)", default_date_2, min_value=today, max_value=max_date, key="date2")
-    with col4: 
-        times_2 = get_available_times(date_2)
-        time_2 = st.selectbox("時間 (第二希望)", times_2 if times_2 else ["現在、空きがありません"], key="time2")
-
-    st.markdown("**💅 第三希望**")
-    col5, col6 = st.columns(2)
-    default_date_3 = today + datetime.timedelta(days=2) if (today + datetime.timedelta(days=2)) <= max_date else max_date
-    with col5: date_3 = st.date_input("日付 (第三希望)", default_date_3, min_value=today, max_value=max_date, key="date3")
-    with col6: 
-        times_3 = get_available_times(date_3)
-        time_3 = st.selectbox("時間 (第三希望)", times_3 if times_3 else ["現在、空きがありません"], key="time3")
+        time_1 = st.selectbox("時間", times_1 if times_1 else ["現在、空きがありません"], key="time1")
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     st.write("お客様情報をご入力ください。")
@@ -288,7 +292,7 @@ elif st.session_state.page == 'reserve':
     if st.button("予約を確定する", use_container_width=True):
         if not customer_name or not customer_email:
             st.warning("⚠️ お名前とメールアドレスを入力してください。")
-        elif "現在、空きがありません" in [time_1, time_2, time_3]:
+        elif time_1 == "現在、空きがありません":
             st.warning("⚠️ 空きのない時間帯が選択されています。別の日時を選択してください。")
         else:
             try:
@@ -296,7 +300,7 @@ elif st.session_state.page == 'reserve':
                 sender_password = st.secrets["email"]["password"]
 
                 subject = "【Ayuka's Nail】仮予約を受け付けました"
-                body = f"""{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【第一希望】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n【第二希望】 {date_2.strftime('%Y年%m月%d日')} {time_2}\n【第三希望】 {date_3.strftime('%Y年%m月%d日')} {time_3}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"""
+                body = f"""{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【ご希望日時】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"""
                 msg = MIMEText(body)
                 msg["Subject"] = subject
                 msg["From"] = sender_email
@@ -316,9 +320,6 @@ elif st.session_state.page == 'reserve':
         change_page('home')
         st.rerun()
 
-# ==========================================
-# ページ5：ギャラリー
-# ==========================================
 elif st.session_state.page == 'gallery':
     st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
     st.write("最新のネイルデザイン。（スマホでは指でスワイプして動かせます）")
