@@ -36,28 +36,14 @@ def change_page(page_name):
 
 st.markdown("""
     <style>
-    div[data-baseweb="popover"] > div,
-    div[data-baseweb="calendar"],
-    ul[role="listbox"],
-    div[role="listbox"] {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-    }
-    div[data-baseweb="popover"] *,
-    div[data-baseweb="calendar"] *,
-    ul[role="listbox"] * {
-        color: #000000 !important;
-        background-color: #ffffff !important;
-    }
-    li[role="option"]:hover {
-        background-color: #f0f0f0 !important;
-    }
     header {visibility: hidden !important;}
     #MainMenu {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important;}
+    
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
+
     .stApp {
         background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 25%, #c2e9fb 50%, #e0c3fc 75%, #f6d365 100%);
         background-attachment: fixed;
@@ -81,9 +67,14 @@ st.markdown("""
         margin-bottom: 20px;
         font-size: 3.5rem;
     }
+    h2, h3 {
+        color: #6a82fb !important;
+        text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
+    }
     .stButton > button {
         background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         color: #555555 !important;
         border: 1px solid rgba(255, 255, 255, 0.8);
         border-radius: 30px;
@@ -96,6 +87,7 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.9);
         border-color: #ff7eb3;
         transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255,126,179,0.3);
         color: #ff7eb3 !important;
     }
     .stTextInput > div > div > input {
@@ -103,16 +95,49 @@ st.markdown("""
         color: #333333 !important;
         border: 2px solid rgba(255, 255, 255, 0.9);
         border-radius: 15px;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
         padding: 10px;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #ff7eb3;
+        box-shadow: 0 0 10px rgba(255, 126, 179, 0.3);
+    }
+    button span {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        text-shadow: none !important;
+        letter-spacing: normal !important;
+        color: #777777 !important;
+    }
+    div[role="radiogroup"] label {
+        margin-right: 20px;
+    }
+
+    @media (max-width: 768px) {
+        h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
+        .block-container { padding-top: 2rem !important; }
+    }
+
+    div[data-baseweb="popover"] > div {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+    }
+    div[data-baseweb="calendar"] *, ul[role="listbox"] * {
+        color: #000000 !important;
+        text-shadow: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 if st.session_state.page == 'login':
     st.markdown("<h1 style='margin-top: 5vh;'>✨ Ayuka's Nail Site ✨</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.2rem;'>Please enter your password</p>", unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
         password = st.text_input("Password", type="password", label_visibility="collapsed", placeholder="Password")
+        st.write("")
         if st.button("LOG IN", use_container_width=True):
             if password == "1234":
                 change_page('home')
@@ -125,12 +150,18 @@ if st.session_state.page == 'login':
 
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
+    st.info("💡 カレンダーの〇×管理は自動化されたため、ここでの手動設定は不要になりました！予定の変更はCahoカレンダーで行ってください。")
+    
+    st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
-    is_active = st.toggle("お知らせを表示する", value=site_data["notice"]["is_active"])
-    if st.button("💾 保存する"):
+    is_active = st.toggle("お知らせをユーザーサイトに表示する", value=site_data["notice"]["is_active"])
+    
+    if st.button("💾 お知らせを保存する", use_container_width=True):
         site_data["notice"] = {"text": notice_text, "is_active": is_active}
         save_data(site_data)
-        st.success("保存しました！")
+        st.success("お知らせ設定を保存しました！")
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
     if st.button("← ログアウト"):
         change_page('login')
         st.rerun()
@@ -138,103 +169,197 @@ elif st.session_state.page == 'admin_dashboard':
 elif st.session_state.page == 'home':
     notice = site_data["notice"]
     if notice["is_active"] and notice["text"]:
-        st.toast(f"📢 {notice['text']}", icon="🔔")
-        st.info(f"**【お知らせ】**\n\n{notice['text']}")
-    st.markdown("<h1>Welcome to Ayuka's Nail</h1>", unsafe_allow_html=True)
+        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔") 
+        st.info(f"**【お知らせ】**\n\n{notice['text']}") 
+
+    st.markdown("<h1 style='margin-top: 2vh;'>Welcome to Ayuka's Nail</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.1rem;'>ご希望のメニューを選択してください</p>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("📅 ネイルの予約へ", use_container_width=True):
         change_page('reserve')
         st.rerun()
-    if st.button("📸 ギャラリーへ", use_container_width=True):
+    st.write("")
+    if st.button("📸 参考画像ギャラリーへ", use_container_width=True):
         change_page('gallery')
         st.rerun()
 
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
+    st.write("ご希望のメニューと日時を入力してください。（本日より1ヶ月先まで選択可能です）")
+    st.markdown("<br>", unsafe_allow_html=True)
+
     today = datetime.date.today()
-    max_date = today + datetime.timedelta(days=30)
+    max_date = today + datetime.timedelta(days=30) 
     JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
     @st.cache_data(ttl=60)
     def get_available_times(selected_date):
         try:
-            creds_json = st.secrets["google_credentials"]
+            creds_json = st.secrets["calendar"]["google_credentials"]
             creds_dict = json.loads(creds_json)
             creds = service_account.Credentials.from_service_account_info(
                 creds_dict, scopes=['https://www.googleapis.com/auth/calendar.readonly']
             )
             service = build('calendar', 'v3', credentials=creds)
             calendar_id = st.secrets["calendar"]["id"]
+
+            time_min = datetime.datetime.combine(selected_date, datetime.time.min, tzinfo=JST).isoformat()
+            time_max = datetime.datetime.combine(selected_date, datetime.time.max, tzinfo=JST).isoformat()
+
             events_result = service.events().list(
-                calendarId=calendar_id, timeMin=datetime.datetime.combine(selected_date, datetime.time.min, tzinfo=JST).isoformat(),
-                timeMax=datetime.datetime.combine(selected_date, datetime.time.max, tzinfo=JST).isoformat(),
+                calendarId=calendar_id, timeMin=time_min, timeMax=time_max,
                 singleEvents=True, orderBy='startTime'
             ).execute()
             events = events_result.get('items', [])
-            
+
             available_slots = []
+            
             day_block_start = None
             day_block_end = None
             is_all_day = False
+
             for event in events:
                 start_str = event['start'].get('dateTime', event['start'].get('date'))
                 end_str = event['end'].get('dateTime', event['end'].get('date'))
+
                 if len(start_str) == 10:
                     is_all_day = True
                     break
-                event_start = datetime.datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-                event_end = datetime.datetime.fromisoformat(end_str.replace('Z', '+00:00'))
-                if day_block_start is None or event_start < day_block_start: day_block_start = event_start
-                if day_block_end is None or event_end > day_block_end: day_block_end = event_end
+
+                if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
+                if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
+                
+                event_start = datetime.datetime.fromisoformat(start_str)
+                event_end = datetime.datetime.fromisoformat(end_str)
+
+                if day_block_start is None or event_start < day_block_start:
+                    day_block_start = event_start
+                if day_block_end is None or event_end > day_block_end:
+                    day_block_end = event_end
 
             current_dt = datetime.datetime.combine(selected_date, datetime.time(8, 0), tzinfo=JST)
             end_dt = datetime.datetime.combine(selected_date, datetime.time(22, 0), tzinfo=JST)
+
             while current_dt <= end_dt:
                 slot_start = current_dt
                 slot_end = slot_start + datetime.timedelta(hours=1)
                 is_overlap = False
+
                 if is_all_day:
                     is_overlap = True
                 elif day_block_start and day_block_end:
                     cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
                     buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
+                    
                     if slot_start > cutoff_time and slot_start < buffered_block_end:
                         is_overlap = True
+
                 if not is_overlap:
                     available_slots.append(slot_start.strftime("%H:%M"))
+                
                 current_dt += datetime.timedelta(minutes=30)
+
             return available_slots
-        except:
+        except Exception as e:
+            st.error(f"⚠️ カレンダーの読み込みに失敗しました。設定を確認してください。({e})")
             return []
 
-    menu = st.radio("メニュー", ["ハンドネイル", "フットネイル"], horizontal=True)
-    date_1 = st.date_input("日付", today, min_value=today, max_value=max_date)
-    time_1 = st.selectbox("時間", get_available_times(date_1) or ["現在、空きがありません"])
-    name = st.text_input("お名前")
-    email = st.text_input("メールアドレス")
-    
-    if st.button("予約を確定する"):
-        if not name or not email:
-            st.warning("入力してください。")
+    st.markdown("**💅 ご希望のメニュー**")
+    menu_choice = st.radio("施術箇所を選択してください", ["ハンドネイル (手)", "フットネイル (足)"], horizontal=True)
+
+    st.markdown("<br>**💅 ご希望の日時**", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1: date_1 = st.date_input("日付", today, min_value=today, max_value=max_date, key="date1")
+    with col2: 
+        times_1 = get_available_times(date_1)
+        time_1 = st.selectbox("時間", times_1 if times_1 else ["現在、空きがありません"], key="time1")
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.write("お客様情報をご入力ください。")
+    customer_name = st.text_input("お名前")
+    customer_email = st.text_input("メールアドレス")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("予約を確定する", use_container_width=True):
+        if not customer_name or not customer_email:
+            st.warning("⚠️ お名前とメールアドレスを入力してください。")
+        elif time_1 == "現在、空きがありません":
+            st.warning("⚠️ 空きのない時間帯が選択されています。別の日時を選択してください。")
         else:
             try:
-                sender_email = "ayukanail.reserve@gmail.com"
-                sender_password = "latdmqbxcjhpdqvt" 
-                recipient = "ismr3.ryo@gmail.com"
-                msg = MIMEText(f"お名前: {name}\nメニュー: {menu}\n日時: {date_1} {time_1}")
-                msg["Subject"] = "仮予約申し込み"
+                sender_email = st.secrets["email"]["address"]
+                sender_password = st.secrets["email"]["password"]
+
+                subject = "【Ayuka's Nail】仮予約を受け付けました"
+                body = f"""{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【ご希望日時】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"""
+                msg = MIMEText(body)
+                msg["Subject"] = subject
                 msg["From"] = sender_email
-                msg["To"] = recipient
-                msg["Cc"] = "mmirukoko@gmail.com"
-                
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-                    s.login(sender_email, sender_password)
-                    s.sendmail(sender_email, [recipient, "mmirukoko@gmail.com"], msg.as_string())
-                st.success("送信しました！")
+                msg["To"] = customer_email
+                msg["Bcc"] = "mmirukoko@gmail.com"
+
+                server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+                server.quit()
+                st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
             except Exception as e:
-                st.error(f"エラー: {e}")
+                st.error("メールの送信に失敗しました。管理者のメール設定（Secrets）を確認してください。")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("← ホームに戻る"):
+        change_page('home')
+        st.rerun()
 
 elif st.session_state.page == 'gallery':
     st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
-    if st.button("← ホームへ"):
+    st.write("最新のネイルデザイン。（スマホでは指でスワイプして動かせます）")
+
+    def get_swiper_html():
+        slides_html = ""
+        for i in range(1, 10):
+            file_name = f"nail{i}.png"
+            if os.path.exists(file_name):
+                with open(file_name, "rb") as image_file:
+                    encoded = base64.b64encode(image_file.read()).decode()
+                    img_src = f"data:image/png;base64,{encoded}"
+            else:
+                img_src = f"https://via.placeholder.com/200x250/ffffff/ff7eb3?text=Nail+{i}"
+            slides_html += f'<div class="swiper-slide"><img src="{img_src}"></div>'
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+            <style>
+                body {{ margin: 0; padding: 0; background: transparent; overflow: hidden; }}
+                .swiper {{ width: 100%; padding: 20px 0; }}
+                .swiper-wrapper {{ transition-timing-function: linear !important; }}
+                .swiper-slide {{ width: auto; display: flex; justify-content: center; align-items: center; }}
+                .swiper-slide img {{ height: 250px; object-fit: cover; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }}
+                @media (max-width: 768px) {{ .swiper-slide img {{ height: 180px; }} }}
+            </style>
+        </head>
+        <body>
+            <div class="swiper mySwiper"><div class="swiper-wrapper">{slides_html}</div></div>
+            <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+            <script>
+                const swiper = new Swiper('.mySwiper', {{
+                    loop: true, slidesPerView: 'auto', spaceBetween: 20, speed: 6000, allowTouchMove: true,
+                    autoplay: {{ delay: 0, disableOnInteraction: false }},
+                }});
+            </script>
+        </body>
+        </html>
+        """
+        return html_content
+
+    components.html(get_swiper_html(), height=300)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    if st.button("← ホームに戻る"):
         change_page('home')
         st.rerun()
+
