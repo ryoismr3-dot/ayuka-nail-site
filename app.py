@@ -41,7 +41,7 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important;}
-    
+
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
 
     .stApp {
@@ -117,15 +117,21 @@ st.markdown("""
         .block-container { padding-top: 2rem !important; }
     }
 
-    div[data-baseweb="popover"] > div {
+    div[data-baseweb="popover"] > div,
+    div[data-baseweb="calendar"],
+    ul[role="listbox"],
+    div[role="listbox"] {
         background-color: #ffffff !important;
         color: #000000 !important;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
     }
-    div[data-baseweb="calendar"] *, ul[role="listbox"] * {
+    div[data-baseweb="popover"] *,
+    div[data-baseweb="calendar"] *,
+    ul[role="listbox"] * {
         color: #000000 !important;
-        text-shadow: none !important;
+        background-color: #ffffff !important;
+    }
+    li[role="option"]:hover {
+        background-color: #f0f0f0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -151,11 +157,11 @@ if st.session_state.page == 'login':
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
     st.info("💡 カレンダーの〇×管理は自動化されたため、ここでの手動設定は不要になりました！予定の変更はCahoカレンダーで行ってください。")
-    
+
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
     is_active = st.toggle("お知らせをユーザーサイトに表示する", value=site_data["notice"]["is_active"])
-    
+
     if st.button("💾 お知らせを保存する", use_container_width=True):
         site_data["notice"] = {"text": notice_text, "is_active": is_active}
         save_data(site_data)
@@ -169,8 +175,8 @@ elif st.session_state.page == 'admin_dashboard':
 elif st.session_state.page == 'home':
     notice = site_data["notice"]
     if notice["is_active"] and notice["text"]:
-        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔") 
-        st.info(f"**【お知らせ】**\n\n{notice['text']}") 
+        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔")
+        st.info(f"**【お知らせ】**\n\n{notice['text']}")
 
     st.markdown("<h1 style='margin-top: 2vh;'>Welcome to Ayuka's Nail</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1rem;'>ご希望のメニューを選択してください</p>", unsafe_allow_html=True)
@@ -190,7 +196,7 @@ elif st.session_state.page == 'reserve':
     st.markdown("<br>", unsafe_allow_html=True)
 
     today = datetime.date.today()
-    max_date = today + datetime.timedelta(days=30) 
+    max_date = today + datetime.timedelta(days=30)
     JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
     @st.cache_data(ttl=60)
@@ -214,7 +220,7 @@ elif st.session_state.page == 'reserve':
             events = events_result.get('items', [])
 
             available_slots = []
-            
+
             day_block_start = None
             day_block_end = None
             is_all_day = False
@@ -229,7 +235,7 @@ elif st.session_state.page == 'reserve':
 
                 if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
                 if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
-                
+
                 event_start = datetime.datetime.fromisoformat(start_str)
                 event_end = datetime.datetime.fromisoformat(end_str)
 
@@ -251,13 +257,13 @@ elif st.session_state.page == 'reserve':
                 elif day_block_start and day_block_end:
                     cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
                     buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
-                    
+
                     if slot_start > cutoff_time and slot_start < buffered_block_end:
                         is_overlap = True
 
                 if not is_overlap:
                     available_slots.append(slot_start.strftime("%H:%M"))
-                
+
                 current_dt += datetime.timedelta(minutes=30)
 
             return available_slots
@@ -271,7 +277,7 @@ elif st.session_state.page == 'reserve':
     st.markdown("<br>**💅 ご希望の日時**", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1: date_1 = st.date_input("日付", today, min_value=today, max_value=max_date, key="date1")
-    with col2: 
+    with col2:
         times_1 = get_available_times(date_1)
         time_1 = st.selectbox("時間", times_1 if times_1 else ["現在、空きがありません"], key="time1")
 
@@ -288,11 +294,11 @@ elif st.session_state.page == 'reserve':
             st.warning("⚠️ 空きのない時間帯が選択されています。別の日時を選択してください。")
         else:
             try:
-                sender_email = st.secrets["email"]["address"]
-                sender_password = st.secrets["email"]["password"]
+                sender_email = "ayukanail.reserve@gmail.com"
+                sender_password = "csrgeodhnbxnryak"
 
                 subject = "【Ayuka's Nail】仮予約を受け付けました"
-                body = f"""{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【ご希望日時】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"""
+                body = f"{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【ご希望日時】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"
                 msg = MIMEText(body)
                 msg["Subject"] = subject
                 msg["From"] = sender_email
@@ -362,4 +368,3 @@ elif st.session_state.page == 'gallery':
     if st.button("← ホームに戻る"):
         change_page('home')
         st.rerun()
-
