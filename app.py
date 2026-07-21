@@ -71,67 +71,49 @@ st.markdown("""
         color: #6a82fb !important;
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
+
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        align-items: center !important;
+    }
+    [data-testid="column"] {
+        min-width: 55px !important;
+        padding: 0 2px !important;
+        flex: 0 0 auto !important;
+    }
+    [data-testid="column"]:first-child {
+        min-width: 65px !important;
+        position: sticky;
+        left: 0;
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(5px);
+        z-index: 1;
+        text-align: right !important;
+        padding-right: 5px !important;
+    }
+
     .stButton > button {
         background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        color: #555555 !important;
-        border: 1px solid rgba(255, 255, 255, 0.8);
+        color: #ff7eb3 !important;
+        border: 2px solid rgba(255, 126, 179, 0.8);
         border-radius: 30px;
-        padding: 12px 28px;
-        transition: all 0.4s ease;
-        font-weight: 500;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        padding: 5px;
+        transition: all 0.3s ease;
+        font-weight: bold;
     }
     .stButton > button:hover {
-        background: rgba(255, 255, 255, 0.9);
-        border-color: #ff7eb3;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(255,126,179,0.3);
-        color: #ff7eb3 !important;
+        background: #ff7eb3 !important;
+        color: white !important;
     }
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.5);
         color: #333333 !important;
         border: 2px solid rgba(255, 255, 255, 0.9);
         border-radius: 15px;
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
         padding: 10px;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #ff7eb3;
-        box-shadow: 0 0 10px rgba(255, 126, 179, 0.3);
-    }
-    button span {
-        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
-        text-shadow: none !important;
-        letter-spacing: normal !important;
-        color: #777777 !important;
-    }
-    div[role="radiogroup"] label {
-        margin-right: 20px;
-    }
-
-    @media (max-width: 768px) {
-        h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
-        .block-container { padding-top: 2rem !important; }
-    }
-
-    div[data-baseweb="popover"] > div,
-    div[data-baseweb="calendar"],
-    ul[role="listbox"],
-    div[role="listbox"] {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-    }
-    div[data-baseweb="popover"] *,
-    div[data-baseweb="calendar"] *,
-    ul[role="listbox"] * {
-        color: #000000 !important;
-        background-color: #ffffff !important;
-    }
-    li[role="option"]:hover {
-        background-color: #f0f0f0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -156,7 +138,6 @@ if st.session_state.page == 'login':
 
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
-    st.info("💡 カレンダーの〇×管理は自動化されたため、ここでの手動設定は不要になりました！予定の変更はCahoカレンダーで行ってください。")
 
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
@@ -192,26 +173,33 @@ elif st.session_state.page == 'home':
 
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
-    st.write("ご希望のメニューと日時を入力してください。（本日より1ヶ月先まで選択可能です）")
-    st.markdown("<br>", unsafe_allow_html=True)
+
+    if "week_offset" not in st.session_state:
+        st.session_state.week_offset = 0
+    if "selected_datetime" not in st.session_state:
+        st.session_state.selected_datetime = None
 
     today = datetime.date.today()
-    max_date = today + datetime.timedelta(days=30)
     JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
     @st.cache_data(ttl=60)
-    def get_available_times(selected_date):
+    def get_week_availability(start_date):
         try:
-            creds_json = st.secrets["calendar"]["google_credentials"]
+            try:
+                creds_json = st.secrets["calendar"]["google_credentials"]
+                calendar_id = st.secrets["calendar"]["id"]
+            except KeyError:
+                creds_json = st.secrets["google_credentials"]
+                calendar_id = st.secrets["calendar_id"]
+
             creds_dict = json.loads(creds_json)
             creds = service_account.Credentials.from_service_account_info(
                 creds_dict, scopes=['https://www.googleapis.com/auth/calendar.readonly']
             )
             service = build('calendar', 'v3', credentials=creds)
-            calendar_id = st.secrets["calendar"]["id"]
 
-            time_min = datetime.datetime.combine(selected_date, datetime.time.min, tzinfo=JST).isoformat()
-            time_max = datetime.datetime.combine(selected_date, datetime.time.max, tzinfo=JST).isoformat()
+            time_min = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=JST).isoformat()
+            time_max = datetime.datetime.combine(start_date + datetime.timedelta(days=7), datetime.time.max, tzinfo=JST).isoformat()
 
             events_result = service.events().list(
                 calendarId=calendar_id, timeMin=time_min, timeMax=time_max,
@@ -219,101 +207,153 @@ elif st.session_state.page == 'reserve':
             ).execute()
             events = events_result.get('items', [])
 
-            available_slots = []
+            available_dict = {}
+            for i in range(7):
+                target_date = start_date + datetime.timedelta(days=i)
+                target_start = datetime.datetime.combine(target_date, datetime.time.min, tzinfo=JST)
+                target_end = datetime.datetime.combine(target_date, datetime.time.max, tzinfo=JST)
 
-            day_block_start = None
-            day_block_end = None
-            is_all_day = False
+                day_block_start = None
+                day_block_end = None
+                is_all_day = False
 
-            for event in events:
-                start_str = event['start'].get('dateTime', event['start'].get('date'))
-                end_str = event['end'].get('dateTime', event['end'].get('date'))
+                for event in events:
+                    start_str = event['start'].get('dateTime', event['start'].get('date'))
+                    end_str = event['end'].get('dateTime', event['end'].get('date'))
 
-                if len(start_str) == 10:
-                    is_all_day = True
-                    break
+                    if len(start_str) == 10:
+                        ev_start = datetime.datetime.strptime(start_str, "%Y-%m-%d").date()
+                        ev_end = datetime.datetime.strptime(end_str, "%Y-%m-%d").date()
+                        if ev_start <= target_date < ev_end:
+                            is_all_day = True
+                        continue
 
-                if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
-                if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
+                    if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
+                    if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
 
-                event_start = datetime.datetime.fromisoformat(start_str)
-                event_end = datetime.datetime.fromisoformat(end_str)
+                    event_start = datetime.datetime.fromisoformat(start_str)
+                    event_end = datetime.datetime.fromisoformat(end_str)
 
-                if day_block_start is None or event_start < day_block_start:
-                    day_block_start = event_start
-                if day_block_end is None or event_end > day_block_end:
-                    day_block_end = event_end
+                    if event_start <= target_end and event_end >= target_start:
+                        if day_block_start is None or event_start < day_block_start:
+                            day_block_start = event_start
+                        if day_block_end is None or event_end > day_block_end:
+                            day_block_end = event_end
 
-            current_dt = datetime.datetime.combine(selected_date, datetime.time(8, 0), tzinfo=JST)
-            end_dt = datetime.datetime.combine(selected_date, datetime.time(22, 0), tzinfo=JST)
+                current_dt = datetime.datetime.combine(target_date, datetime.time(8, 0), tzinfo=JST)
+                end_dt = datetime.datetime.combine(target_date, datetime.time(22, 0), tzinfo=JST)
+                slots = []
 
-            while current_dt <= end_dt:
-                slot_start = current_dt
-                slot_end = slot_start + datetime.timedelta(hours=1)
-                is_overlap = False
+                while current_dt <= end_dt:
+                    slot_start = current_dt
+                    slot_end = slot_start + datetime.timedelta(hours=1)
+                    is_overlap = False
 
-                if is_all_day:
-                    is_overlap = True
-                elif day_block_start and day_block_end:
-                    cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
-                    buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
-
-                    if slot_start > cutoff_time and slot_start < buffered_block_end:
+                    if is_all_day:
                         is_overlap = True
+                    elif day_block_start and day_block_end:
+                        cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
+                        buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
+                        if slot_start > cutoff_time and slot_start < buffered_block_end:
+                            is_overlap = True
 
-                if not is_overlap:
-                    available_slots.append(slot_start.strftime("%H:%M"))
+                    if not is_overlap:
+                        slots.append(slot_start.strftime("%H:%M"))
 
-                current_dt += datetime.timedelta(minutes=30)
+                    current_dt += datetime.timedelta(minutes=30)
 
-            return available_slots
+                available_dict[target_date] = slots
+            return available_dict
         except Exception as e:
-            st.error(f"⚠️ カレンダーの読み込みに失敗しました。設定を確認してください。({e})")
-            return []
+            return None
 
     st.markdown("**💅 ご希望のメニュー**")
-    menu_choice = st.radio("施術箇所を選択してください", ["ハンドネイル (手)", "フットネイル (足)"], horizontal=True)
+    menu_choice = st.radio("施術箇所", ["ハンドネイル (手)", "フットネイル (足)", "ハンド＆フット (両方)"], horizontal=True, label_visibility="collapsed")
 
-    st.markdown("<br>**💅 ご希望の日時**", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1: date_1 = st.date_input("日付", today, min_value=today, max_value=max_date, key="date1")
-    with col2:
-        times_1 = get_available_times(date_1)
-        time_1 = st.selectbox("時間", times_1 if times_1 else ["現在、空きがありません"], key="time1")
+    st.markdown("**💅 オフの有無**")
+    off_choice = st.radio("オフ", ["オフあり", "オフなし"], horizontal=True, label_visibility="collapsed")
+
+    st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
+
+    col_p, col_c, col_n = st.columns([1, 2, 1])
+    with col_p:
+        if st.button("← 前の週", use_container_width=True):
+            st.session_state.week_offset -= 7
+            st.rerun()
+    with col_c:
+        current_view_date = today + datetime.timedelta(days=st.session_state.week_offset)
+        st.markdown(f"<h4 style='text-align:center; margin-top:5px;'>{current_view_date.strftime('%Y年%m月')}</h4>", unsafe_allow_html=True)
+    with col_n:
+        if st.button("次の週 →", use_container_width=True):
+            st.session_state.week_offset += 7
+            st.rerun()
+
+    availability = get_week_availability(current_view_date)
+
+    if availability is None:
+        st.error("⚠️ カレンダーの読み取りに失敗しました。Googleカレンダーの共有設定を確認してください。")
+    else:
+        weekdays = ["月", "火", "水", "木", "金", "土", "日"]
+        times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
+
+        cols = st.columns(8)
+        cols[0].markdown("<div style='text-align:right; font-weight:bold; font-size:0.9em; padding-top:10px;'>時間</div>", unsafe_allow_html=True)
+        for i in range(7):
+            d = current_view_date + datetime.timedelta(days=i)
+            cols[i+1].markdown(f"<div style='text-align:center; font-weight:bold; font-size:0.9em;'>{d.day}<br><span style='font-size:0.8em;'>{weekdays[d.weekday()]}</span></div>", unsafe_allow_html=True)
+
+        for t in times:
+            cols = st.columns(8)
+            cols[0].markdown(f"<div style='text-align:right; font-weight:bold; font-size:0.9em; padding-top:10px;'>{t}</div>", unsafe_allow_html=True)
+            for i in range(7):
+                d = current_view_date + datetime.timedelta(days=i)
+                with cols[i+1]:
+                    if t in availability[d]:
+                        if st.button("〇", key=f"btn_{d.isoformat()}_{t}", use_container_width=True):
+                            st.session_state.selected_datetime = (d, t)
+                            st.rerun()
+                    else:
+                        st.markdown("<div style='text-align:center; color:#bbb; font-weight:bold; padding-top:10px;'>×</div>", unsafe_allow_html=True)
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
-    st.write("お客様情報をご入力ください。")
-    customer_name = st.text_input("お名前")
-    customer_email = st.text_input("メールアドレス")
+    st.markdown("### 📝 お客様情報の入力")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("予約を確定する", use_container_width=True):
-        if not customer_name or not customer_email:
-            st.warning("⚠️ お名前とメールアドレスを入力してください。")
-        elif time_1 == "現在、空きがありません":
-            st.warning("⚠️ 空きのない時間帯が選択されています。別の日時を選択してください。")
-        else:
-            try:
-                sender_email = "ayukanail.reserve@gmail.com"
-                sender_password = "csrgeodhnbxnryak"
+    if st.session_state.selected_datetime:
+        sel_d, sel_t = st.session_state.selected_datetime
+        st.success(f"✅ 選択中の日時: **{sel_d.strftime('%Y年%m月%d日')} {sel_t}**")
 
-                subject = "【Ayuka's Nail】仮予約を受け付けました"
-                body = f"{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【ご希望日時】 {date_1.strftime('%Y年%m月%d日')} {time_1}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"
-                msg = MIMEText(body)
-                msg["Subject"] = subject
-                msg["From"] = sender_email
-                msg["To"] = customer_email
-                msg["Bcc"] = "mmirukoko@gmail.com"
+        customer_name = st.text_input("お名前")
+        customer_email = st.text_input("メールアドレス")
 
-                server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-                server.login(sender_email, sender_password)
-                server.send_message(msg)
-                server.quit()
-                st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
-            except Exception as e:
-                st.error("メールの送信に失敗しました。管理者のメール設定（Secrets）を確認してください。")
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("予約を確定する", use_container_width=True):
+            if not customer_name or not customer_email:
+                st.warning("⚠️ お名前とメールアドレスを入力してください。")
+            else:
+                try:
+                    sender_email = "ayukanail.reserve@gmail.com"
+                    sender_password = "fibpjgqxaabhohsc"
 
-    st.markdown("<br>", unsafe_allow_html=True)
+                    subject = "【Ayuka's Nail】仮予約を受け付けました"
+                    body = f"{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【オフの有無】 {off_choice}\n【ご希望日時】 {sel_d.strftime('%Y年%m月%d日')} {sel_t}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"
+                    msg = MIMEText(body)
+                    msg["Subject"] = subject
+                    msg["From"] = sender_email
+                    msg["To"] = customer_email
+                    msg["Bcc"] = "mmirukoko@gmail.com"
+
+                    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+                    server.login(sender_email, sender_password)
+                    server.send_message(msg)
+                    server.quit()
+                    st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
+                    st.session_state.selected_datetime = None
+                except Exception as e:
+                    st.error(f"メールの送信に失敗しました。管理者のメール設定を確認してください。")
+    else:
+        st.info("👆 上の表から「〇」をクリックして、ご希望の日時を選択してください。")
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("← ホームに戻る"):
         change_page('home')
         st.rerun()
