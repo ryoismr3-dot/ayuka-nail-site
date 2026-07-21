@@ -1,4 +1,3 @@
-
 import streamlit as st
 import datetime
 import base64
@@ -102,26 +101,44 @@ st.markdown("""
         }
     }
 
+    /* ---------------------------------------------------
+       カレンダーを「絶対に」1画面に収めるパーセンテージ固定設定
+    --------------------------------------------------- */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) {
+        display: flex !important;
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
-        overflow-x: hidden !important; 
         width: 100% !important;
-        gap: 1px !important; 
-        padding-bottom: 5px;
+        max-width: 100vw !important;
+        overflow-x: hidden !important; 
+        gap: 0 !important; 
+        padding-bottom: 5px !important;
     }
     
+    /* 列が内部コンテンツによって広がらないようにする最強のロック */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"] {
         min-width: 0 !important; 
-        flex: 1 1 0 !important; 
-        padding: 0 !important;
+        padding: 0 1px !important;
+        overflow: hidden !important; 
     }
     
+    /* 1列目（時間）は画面幅の16%に完全固定 */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:first-child {
-        flex: 0.8 1 0 !important; 
+        width: 16% !important; 
+        max-width: 16% !important;
+        flex: 0 0 16% !important; 
         background: rgba(255,255,255,0.4);
         border-radius: 4px;
     }
 
+    /* 2〜8列目（7日間）はそれぞれ画面幅の12%に完全固定（12×7 = 84% + 16% = 100%） */
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:not(:first-child) {
+        width: 12% !important; 
+        max-width: 12% !important;
+        flex: 0 0 12% !important; 
+    }
+
+    /* 〇×ボタンの設定 */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button {
         background: rgba(255, 255, 255, 0.8) !important;
         backdrop-filter: none !important;
@@ -139,11 +156,13 @@ st.markdown("""
         box-shadow: none !important;
         transform: none !important;
     }
+    
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button p {
         font-size: 14px !important;
         line-height: 1 !important;
         margin: 0 !important;
     }
+    
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button:hover:not(:disabled) {
         background: #ff7eb3 !important;
         color: white !important;
@@ -160,18 +179,21 @@ st.markdown("""
         margin-bottom: 2px !important;
     }
     
+    /* 時間と曜日のテキスト設定 */
     .time-label {
         height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 10px !important; 
+        font-size: 11px !important; 
         color: #555;
         margin: 0 !important;
         margin-bottom: 2px !important;
         letter-spacing: -0.5px;
+        white-space: nowrap !important;
     }
+    
     .header-label {
         height: 35px;
         display: flex;
@@ -179,11 +201,21 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 10px !important; 
+        font-size: 11px !important; 
         color: #555;
         margin: 0 !important;
         margin-bottom: 4px !important;
         line-height: 1.1;
+        white-space: nowrap !important;
+    }
+
+    /* スマホ向けさらに縮小設定 */
+    @media (max-width: 400px) {
+        .time-label { font-size: 9px !important; }
+        .header-label { font-size: 9px !important; }
+        div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button p {
+            font-size: 11px !important;
+        }
     }
 
     .stTextInput > div > div > input {
