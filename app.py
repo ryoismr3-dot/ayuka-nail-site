@@ -1,3 +1,4 @@
+
 import streamlit as st
 import datetime
 import base64
@@ -35,7 +36,7 @@ def change_page(page_name):
     st.session_state.page = page_name
 
 # ==========================================
-# 【超重要】スマホのバージョンに依存しない最強のCSS
+# 共通デザイン設定
 # ==========================================
 st.markdown("""
     <style>
@@ -75,7 +76,7 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
 
-    /* 基本のボタン設定 */
+    /* 基本の大きなボタン設定 */
     .stButton > button {
         background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(8px);
@@ -95,7 +96,7 @@ st.markdown("""
         box-shadow: 0 8px 25px rgba(255,126,179,0.3);
         color: #ff7eb3 !important;
     }
-    
+
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.5);
         color: #333333 !important;
@@ -103,125 +104,13 @@ st.markdown("""
         border-radius: 15px;
         padding: 10px;
     }
-
-    /* スマホ画面向けのレイアウト強制ロック */
-    @media (max-width: 1000px) {
+    
+    @media (max-width: 768px) {
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
         .block-container { 
             padding-top: 1rem !important;
             padding-left: 2px !important;
             padding-right: 2px !important;
-        }
-
-        /* 縦積みを絶対に許さないためのブロック強制横並び化 */
-        div[data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow: hidden !important; 
-            gap: 0 !important;
-            padding-bottom: 5px !important;
-        }
-        
-        div[data-testid="column"] {
-            min-width: 0 !important; 
-            padding: 0 1px !important;
-            overflow: hidden !important; 
-        }
-
-        /* 【3列レイアウト（前の週・年月・次の週）】 */
-        div[data-testid="column"]:first-child:nth-last-child(3) { width: 25% !important; flex: 0 0 25% !important; }
-        div[data-testid="column"]:first-child:nth-last-child(3) ~ div:nth-child(2) { width: 50% !important; flex: 0 0 50% !important; }
-        div[data-testid="column"]:first-child:nth-last-child(3) ~ div:nth-child(3) { width: 25% !important; flex: 0 0 25% !important; }
-
-        /* 【8列レイアウト（カレンダー）】全ブラウザ対応の16% + 12%×7分割 */
-        div[data-testid="column"]:first-child:nth-last-child(8) {
-            width: 16% !important; 
-            flex: 0 0 16% !important; 
-            background: rgba(255,255,255,0.4);
-            border-radius: 4px;
-        }
-        div[data-testid="column"]:first-child:nth-last-child(8) ~ div {
-            width: 12% !important; 
-            flex: 0 0 12% !important; 
-        }
-    }
-    
-    /* === 〇×ボタンのスマホ最適化（8列ブロック内限定） === */
-    div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button {
-        background: rgba(255, 255, 255, 0.9) !important;
-        backdrop-filter: none !important;
-        color: #ff7eb3 !important;
-        border: 1px solid rgba(255, 126, 179, 0.8) !important;
-        border-radius: 4px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        height: 32px !important;
-        min-height: 32px !important;
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: none !important;
-        transform: none !important;
-    }
-    div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button p {
-        font-size: 14px !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-    div[data-testid="column"]:first-child:nth-last-child(8) ~ div div[data-testid="stButton"] {
-        height: 32px !important;
-        min-height: 32px !important;
-        margin-bottom: 2px !important;
-    }
-    div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button:hover:not(:disabled) {
-        background: #ff7eb3 !important;
-        color: white !important;
-    }
-    div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button:disabled {
-        background: rgba(220, 220, 220, 0.4) !important;
-        color: #999 !important;
-        border: 1px solid rgba(200, 200, 200, 0.3) !important;
-    }
-    
-    /* === テキストの設定 === */
-    .time-label {
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 11px !important; 
-        color: #555;
-        margin: 0 !important;
-        margin-bottom: 2px !important;
-        letter-spacing: -0.5px;
-        white-space: nowrap !important;
-    }
-    .header-label {
-        height: 35px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 11px !important; 
-        color: #555;
-        margin: 0 !important;
-        margin-bottom: 4px !important;
-        line-height: 1.1;
-        white-space: nowrap !important;
-    }
-
-    /* さらに画面が小さいスマホ向け */
-    @media (max-width: 400px) {
-        .time-label { font-size: 9px !important; }
-        .header-label { font-size: 9px !important; }
-        div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button p {
-            font-size: 11px !important;
         }
     }
     </style>
@@ -281,6 +170,112 @@ elif st.session_state.page == 'home':
         st.rerun()
 
 elif st.session_state.page == 'reserve':
+    
+    # =========================================================================
+    # 【超重要】予約ページ専用：全バージョン対応の強制1画面レイアウトCSS
+    # IDの変更に依存せず、列を絶対に横並びに固定します！
+    # =========================================================================
+    st.markdown("""
+        <style>
+        @media (max-width: 768px) {
+            /* 列ブロックを絶対に横並びに固定（縦積みを無効化） */
+            div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                width: 100% !important;
+                overflow: hidden !important; 
+            }
+            
+            /* バージョンに関係なくすべての列の余白を消す */
+            div[data-testid="column"], 
+            div[data-testid="stColumn"] {
+                min-width: 0 !important; 
+                padding: 0 1px !important;
+                overflow: hidden !important; 
+            }
+            
+            /* カラム内のボタン（週切り替え＆カレンダー）をスマホ用に極小化 */
+            div[data-testid="stHorizontalBlock"] .stButton > button {
+                background: rgba(255, 255, 255, 0.9) !important;
+                backdrop-filter: none !important;
+                color: #ff7eb3 !important;
+                border: 1px solid rgba(255, 126, 179, 0.8) !important;
+                border-radius: 4px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                height: 32px !important;
+                min-height: 32px !important;
+                width: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+            div[data-testid="stHorizontalBlock"] .stButton > button p {
+                font-size: 14px !important;
+                line-height: 1 !important;
+                margin: 0 !important;
+            }
+            div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] {
+                height: 32px !important;
+                min-height: 32px !important;
+                margin-bottom: 2px !important;
+            }
+            div[data-testid="stHorizontalBlock"] .stButton > button:hover:not(:disabled) {
+                background: #ff7eb3 !important;
+                color: white !important;
+            }
+            div[data-testid="stHorizontalBlock"] .stButton > button:disabled {
+                background: rgba(220, 220, 220, 0.4) !important;
+                color: #999 !important;
+                border: 1px solid rgba(200, 200, 200, 0.3) !important;
+            }
+            
+            /* テキストの設定 */
+            .time-label {
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 10px !important; 
+                color: #555;
+                margin: 0 !important;
+                margin-bottom: 2px !important;
+                letter-spacing: -0.5px;
+                white-space: nowrap !important;
+                background: rgba(255,255,255,0.4);
+                border-radius: 4px;
+            }
+            .header-label {
+                height: 35px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 10px !important; 
+                color: #555;
+                margin: 0 !important;
+                margin-bottom: 4px !important;
+                line-height: 1.1;
+                white-space: nowrap !important;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .time-label { font-size: 9px !important; letter-spacing: -1px; }
+            .header-label { font-size: 9px !important; }
+            div[data-testid="stHorizontalBlock"] .stButton > button p {
+                font-size: 11px !important;
+            }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    # =========================================================================
+
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
     
     if "week_offset" not in st.session_state:
@@ -388,6 +383,7 @@ elif st.session_state.page == 'reserve':
 
     st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
     
+    # 3列のブロック（週切り替え）
     col_p, col_c, col_n = st.columns([1, 2, 1])
     with col_p:
         if st.button("← 前の週", use_container_width=True):
@@ -409,10 +405,11 @@ elif st.session_state.page == 'reserve':
         weekdays = ["月", "火", "水", "木", "金", "土", "日"]
         times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
         
-        cols = st.columns(8)
+        # 8列のブロック（カレンダー本体：Python側から直接比率を指定して強制横並び化！）
+        cols = st.columns([1.6, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2])
         
         with cols[0]:
-            st.markdown("<div class='header-label'>時間</div>", unsafe_allow_html=True)
+            st.markdown("<div class='header-label' style='background:rgba(255,255,255,0.4); border-radius:4px;'>時間</div>", unsafe_allow_html=True)
             for t in times:
                 st.markdown(f"<div class='time-label'>{t}</div>", unsafe_allow_html=True)
                 
@@ -439,6 +436,7 @@ elif st.session_state.page == 'reserve':
         customer_email = st.text_input("メールアドレス")
 
         st.markdown("<br>", unsafe_allow_html=True)
+        # このボタンは列の中に入っていないため、本来の大きなボタンとして表示されます！
         if st.button("予約を確定する", use_container_width=True):
             if not customer_name or not customer_email:
                 st.warning("⚠️ お名前とメールアドレスを入力してください。")
