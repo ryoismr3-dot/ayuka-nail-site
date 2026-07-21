@@ -224,8 +224,7 @@ st.markdown("""
         margin-bottom: 0 !important;
         padding: 0 !important;
     }
-    
-    /* ★ ここが修正ポイント：見出し（一番上）の下だけ6pxの隙間を空けて重なりを防止！ ★ */
+     
     .calendar-col div[data-testid="stVerticalBlock"] > div.element-container:first-child {
         margin-bottom: 6px !important;
     }
@@ -244,7 +243,7 @@ st.markdown("""
         font-weight: bold;
         font-size: 11px !important; 
         color: #555;
-        margin: 0 0 6px 0 !important; /* ★ 見出し自体の下にも隙間を確保 */
+        margin: 0 0 6px 0 !important; 
         background: rgba(255,255,255,0.3);
         border-radius: 4px;
         line-height: 1.1;
@@ -481,7 +480,7 @@ elif st.session_state.page == 'reserve':
     st.markdown("**💅 オフの有無**")
     off_choice = st.radio("オフ", ["オフあり", "オフなし"], horizontal=True, label_visibility="collapsed")
 
-    st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
+    st.markdown("<br> 📅 日時を選択", unsafe_allow_html=True)
     
     st.markdown("<div id='week-nav-root'></div>", unsafe_allow_html=True)
     col_p, col_c, col_n = st.columns([1, 2, 1])
