@@ -1,3 +1,4 @@
+
 import streamlit as st
 import datetime
 import base64
@@ -76,42 +77,81 @@ st.markdown("""
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
-        align-items: center !important;
+        align-items: stretch !important;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 8px;
+        padding-bottom: 10px;
     }
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"] {
-        min-width: 48px !important;
-        padding: 0 2px !important;
+        min-width: 55px !important;
+        padding: 0 4px !important;
         flex: 0 0 auto !important;
     }
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:first-child {
         min-width: 65px !important;
         position: sticky;
         left: 0;
-        background: rgba(255,255,255,0.9);
+        background: rgba(255,255,255,0.95);
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
         z-index: 10;
-        text-align: right !important;
-        padding-right: 5px !important;
+        border-right: 1px solid rgba(0,0,0,0.1);
     }
 
+    /* 〇 Buttons and standard buttons */
     .stButton > button {
-        background: rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.7);
         color: #ff7eb3 !important;
         border: 2px solid rgba(255, 126, 179, 0.8);
-        border-radius: 30px;
-        padding: 5px;
+        border-radius: 8px;
         transition: all 0.3s ease;
         font-weight: bold;
     }
-    .stButton > button:hover {
+    .stButton > button:hover:not(:disabled) {
         background: #ff7eb3 !important;
         color: white !important;
     }
+    
+    /* × Buttons (Disabled) */
+    .stButton > button:disabled {
+        background: rgba(220, 220, 220, 0.3) !important;
+        color: #bbb !important;
+        border: 1px solid rgba(200, 200, 200, 0.4) !important;
+    }
+
+    /* 縦のズレをなくすための高さ完全固定設定 */
+    div[data-testid="stButton"] {
+        height: 40px;
+    }
+    div[data-testid="stButton"] > button {
+        height: 40px !important;
+        min-height: 40px !important;
+        padding: 0 !important;
+    }
+    .time-label {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-weight: bold;
+        font-size: 0.9em;
+        color: #555;
+        margin: 0 !important;
+    }
+    .header-label {
+        height: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        font-weight: bold;
+        color: #555;
+        padding-bottom: 5px;
+        margin: 0 !important;
+    }
+    div[data-testid="stMarkdownContainer"] p {
+        margin-bottom: 0 !important;
+    }
+
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.5);
         color: #333333 !important;
@@ -300,24 +340,28 @@ elif st.session_state.page == 'reserve':
         weekdays = ["月", "火", "水", "木", "金", "土", "日"]
         times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
         
+        # 1つのブロックで全てを囲む（これでスクロールバーは全体で1つになる）
         cols = st.columns(8)
-        cols[0].markdown("<div style='text-align:right; font-weight:bold; font-size:0.9em; padding-top:10px;'>時間</div>", unsafe_allow_html=True)
+        
+        # [列0] 時間ラベルを縦に並べる
+        with cols[0]:
+            st.markdown("<div class='header-label' style='padding-right:5px;'>時間</div>", unsafe_allow_html=True)
+            for t in times:
+                st.markdown(f"<div class='time-label' style='padding-right:5px;'>{t}</div>", unsafe_allow_html=True)
+                
+        # [列1〜7] 日付とボタンを縦に並べる
         for i in range(7):
             d = current_view_date + datetime.timedelta(days=i)
-            cols[i+1].markdown(f"<div style='text-align:center; font-weight:bold; font-size:0.9em;'>{d.day}<br><span style='font-size:0.8em;'>{weekdays[d.weekday()]}</span></div>", unsafe_allow_html=True)
-
-        for t in times:
-            cols = st.columns(8)
-            cols[0].markdown(f"<div style='text-align:right; font-weight:bold; font-size:0.9em; padding-top:10px;'>{t}</div>", unsafe_allow_html=True)
-            for i in range(7):
-                d = current_view_date + datetime.timedelta(days=i)
-                with cols[i+1]:
+            with cols[i+1]:
+                st.markdown(f"<div class='header-label' style='line-height:1.2;'>{d.day}<br><span style='font-size:0.8em;'>{weekdays[d.weekday()]}</span></div>", unsafe_allow_html=True)
+                for t in times:
                     if t in availability[d]:
                         if st.button("〇", key=f"btn_{d.isoformat()}_{t}", use_container_width=True):
                             st.session_state.selected_datetime = (d, t)
                             st.rerun()
                     else:
-                        st.markdown("<div style='text-align:center; color:#bbb; font-weight:bold; padding-top:10px;'>×</div>", unsafe_allow_html=True)
+                        # 予約不可の場合はバツボタン（押せない状態）
+                        st.button("×", key=f"btn_{d.isoformat()}_{t}", disabled=True, use_container_width=True)
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     st.markdown("### 📝 お客様情報の入力")
