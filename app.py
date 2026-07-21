@@ -1,4 +1,3 @@
-
 import streamlit as st
 import datetime
 import base64
@@ -73,80 +72,84 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
     
-    /* カレンダー（8列のブロック）専用の横スクロール設定 */
+    /* ---------------------------------------------------
+       カレンダー（8列）を1画面に完全に収めるための設定
+    --------------------------------------------------- */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) {
         flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        align-items: stretch !important;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 10px;
+        overflow-x: hidden !important; /* スクロールを完全に禁止 */
+        width: 100% !important;
+        gap: 2px !important; /* ボタン同士の隙間を最小限に */
+        padding-bottom: 5px;
     }
+    
+    /* 各曜日の列（2〜8列目） */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"] {
-        min-width: 55px !important;
-        padding: 0 4px !important;
-        flex: 0 0 auto !important;
+        min-width: 0 !important; /* 画面からはみ出す原因だった制限を解除 */
+        flex: 1 1 0 !important; /* 均等に幅を割り当て */
+        padding: 0 !important;
     }
+    
+    /* 時間の列（1列目）のみ少し幅を広くとる */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:first-child {
-        min-width: 65px !important;
-        position: sticky;
-        left: 0;
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        z-index: 10;
-        border-right: 1px solid rgba(0,0,0,0.1);
+        flex: 1.3 1 0 !important; 
+        background: rgba(255,255,255,0.4);
+        border-radius: 4px;
     }
 
-    /* 〇 Buttons and standard buttons */
+    /* 〇ボタンのサイズをスマホに最適化 */
     .stButton > button {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.8);
         color: #ff7eb3 !important;
-        border: 2px solid rgba(255, 126, 179, 0.8);
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-weight: bold;
+        border: 1px solid rgba(255, 126, 179, 0.8) !important;
+        border-radius: 4px !important;
+        padding: 0 !important;
+        height: 35px !important;
+        min-height: 35px !important;
+        font-size: 16px !important;
+        width: 100% !important;
+        transition: all 0.2s ease;
     }
     .stButton > button:hover:not(:disabled) {
         background: #ff7eb3 !important;
         color: white !important;
     }
     
-    /* × Buttons (Disabled) */
+    /* ×ボタン（予約不可） */
     .stButton > button:disabled {
-        background: rgba(220, 220, 220, 0.3) !important;
-        color: #bbb !important;
-        border: 1px solid rgba(200, 200, 200, 0.4) !important;
+        background: rgba(220, 220, 220, 0.4) !important;
+        color: #999 !important;
+        border: 1px solid rgba(200, 200, 200, 0.3) !important;
     }
 
-    /* 縦のズレをなくすための高さ完全固定設定 */
+    /* 文字サイズの極小化（1画面に収めるため） */
     div[data-testid="stButton"] {
-        height: 40px;
-    }
-    div[data-testid="stButton"] > button {
-        height: 40px !important;
-        min-height: 40px !important;
-        padding: 0 !important;
+        height: 35px;
+        margin-bottom: 2px;
     }
     .time-label {
-        height: 40px;
+        height: 35px;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: center;
         font-weight: bold;
-        font-size: 0.9em;
+        font-size: 11px; /* 小さめのフォント */
         color: #555;
         margin: 0 !important;
+        margin-bottom: 2px !important;
     }
     .header-label {
-        height: 50px;
+        height: 35px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: center;
         font-weight: bold;
+        font-size: 11px; /* 曜日のフォント */
         color: #555;
-        padding-bottom: 5px;
         margin: 0 !important;
+        margin-bottom: 5px !important;
+        line-height: 1.2;
     }
     div[data-testid="stMarkdownContainer"] p {
         margin-bottom: 0 !important;
@@ -340,27 +343,25 @@ elif st.session_state.page == 'reserve':
         weekdays = ["月", "火", "水", "木", "金", "土", "日"]
         times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
         
-        # 1つのブロックで全てを囲む（これでスクロールバーは全体で1つになる）
         cols = st.columns(8)
         
-        # [列0] 時間ラベルを縦に並べる
+        # [列0] 時間
         with cols[0]:
-            st.markdown("<div class='header-label' style='padding-right:5px;'>時間</div>", unsafe_allow_html=True)
+            st.markdown("<div class='header-label'>時間</div>", unsafe_allow_html=True)
             for t in times:
-                st.markdown(f"<div class='time-label' style='padding-right:5px;'>{t}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='time-label'>{t}</div>", unsafe_allow_html=True)
                 
-        # [列1〜7] 日付とボタンを縦に並べる
+        # [列1〜7] 日付とボタン
         for i in range(7):
             d = current_view_date + datetime.timedelta(days=i)
             with cols[i+1]:
-                st.markdown(f"<div class='header-label' style='line-height:1.2;'>{d.day}<br><span style='font-size:0.8em;'>{weekdays[d.weekday()]}</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='header-label'>{d.day}<br><span style='font-size:0.8em;'>{weekdays[d.weekday()]}</span></div>", unsafe_allow_html=True)
                 for t in times:
                     if t in availability[d]:
                         if st.button("〇", key=f"btn_{d.isoformat()}_{t}", use_container_width=True):
                             st.session_state.selected_datetime = (d, t)
                             st.rerun()
                     else:
-                        # 予約不可の場合はバツボタン（押せない状態）
                         st.button("×", key=f"btn_{d.isoformat()}_{t}", disabled=True, use_container_width=True)
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
