@@ -1,3 +1,4 @@
+
 import streamlit as st
 import datetime
 import base64
@@ -71,72 +72,105 @@ st.markdown("""
         color: #6a82fb !important;
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
+
+    .stButton > button {
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #555555 !important;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 30px;
+        padding: 12px 28px;
+        transition: all 0.4s ease;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #ff7eb3;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255,126,179,0.3);
+        color: #ff7eb3 !important;
+    }
     
-    /* ---------------------------------------------------
-       カレンダー（8列）を1画面に完全に収めるための設定
-    --------------------------------------------------- */
+    @media (max-width: 768px) {
+        h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
+        .block-container { 
+            padding-top: 1rem !important;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+        }
+    }
+
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) {
         flex-wrap: nowrap !important;
-        overflow-x: hidden !important; /* スクロールを完全に禁止 */
+        overflow-x: hidden !important; 
         width: 100% !important;
-        gap: 2px !important; /* ボタン同士の隙間を最小限に */
+        gap: 1px !important; 
         padding-bottom: 5px;
     }
     
-    /* 各曜日の列（2〜8列目） */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"] {
-        min-width: 0 !important; /* 画面からはみ出す原因だった制限を解除 */
-        flex: 1 1 0 !important; /* 均等に幅を割り当て */
+        min-width: 0 !important; 
+        flex: 1 1 0 !important; 
         padding: 0 !important;
     }
     
-    /* 時間の列（1列目）のみ少し幅を広くとる */
     div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:first-child {
-        flex: 1.3 1 0 !important; 
+        flex: 0.8 1 0 !important; 
         background: rgba(255,255,255,0.4);
         border-radius: 4px;
     }
 
-    /* 〇ボタンのサイズをスマホに最適化 */
-    .stButton > button {
-        background: rgba(255, 255, 255, 0.8);
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: none !important;
         color: #ff7eb3 !important;
         border: 1px solid rgba(255, 126, 179, 0.8) !important;
         border-radius: 4px !important;
         padding: 0 !important;
-        height: 35px !important;
-        min-height: 35px !important;
-        font-size: 16px !important;
+        margin: 0 !important;
+        height: 32px !important;
+        min-height: 32px !important;
         width: 100% !important;
-        transition: all 0.2s ease;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: none !important;
+        transform: none !important;
     }
-    .stButton > button:hover:not(:disabled) {
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button p {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button:hover:not(:disabled) {
         background: #ff7eb3 !important;
         color: white !important;
     }
-    
-    /* ×ボタン（予約不可） */
-    .stButton > button:disabled {
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) .stButton > button:disabled {
         background: rgba(220, 220, 220, 0.4) !important;
         color: #999 !important;
         border: 1px solid rgba(200, 200, 200, 0.3) !important;
     }
 
-    /* 文字サイズの極小化（1画面に収めるため） */
-    div[data-testid="stButton"] {
-        height: 35px;
-        margin-bottom: 2px;
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) div[data-testid="stButton"] {
+        height: 32px !important;
+        min-height: 32px !important;
+        margin-bottom: 2px !important;
     }
+    
     .time-label {
-        height: 35px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 11px; /* 小さめのフォント */
+        font-size: 10px !important; 
         color: #555;
         margin: 0 !important;
         margin-bottom: 2px !important;
+        letter-spacing: -0.5px;
     }
     .header-label {
         height: 35px;
@@ -145,14 +179,11 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 11px; /* 曜日のフォント */
+        font-size: 10px !important; 
         color: #555;
         margin: 0 !important;
-        margin-bottom: 5px !important;
-        line-height: 1.2;
-    }
-    div[data-testid="stMarkdownContainer"] p {
-        margin-bottom: 0 !important;
+        margin-bottom: 4px !important;
+        line-height: 1.1;
     }
 
     .stTextInput > div > div > input {
@@ -255,6 +286,8 @@ elif st.session_state.page == 'reserve':
             events = events_result.get('items', [])
 
             available_dict = {}
+            now_jst = datetime.datetime.now(JST)
+
             for i in range(7):
                 target_date = start_date + datetime.timedelta(days=i)
                 target_start = datetime.datetime.combine(target_date, datetime.time.min, tzinfo=JST)
@@ -296,7 +329,9 @@ elif st.session_state.page == 'reserve':
                     slot_end = slot_start + datetime.timedelta(hours=1)
                     is_overlap = False
 
-                    if is_all_day:
+                    if slot_start < now_jst:
+                        is_overlap = True
+                    elif is_all_day:
                         is_overlap = True
                     elif day_block_start and day_block_end:
                         cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
@@ -345,13 +380,11 @@ elif st.session_state.page == 'reserve':
         
         cols = st.columns(8)
         
-        # [列0] 時間
         with cols[0]:
             st.markdown("<div class='header-label'>時間</div>", unsafe_allow_html=True)
             for t in times:
                 st.markdown(f"<div class='time-label'>{t}</div>", unsafe_allow_html=True)
                 
-        # [列1〜7] 日付とボタン
         for i in range(7):
             d = current_view_date + datetime.timedelta(days=i)
             with cols[i+1]:
