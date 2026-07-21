@@ -66,6 +66,7 @@ st.markdown("""
         letter-spacing: 2px;
         margin-bottom: 20px;
         font-size: 3.5rem;
+        white-space: nowrap !important;
     }
     h2, h3 {
         color: #6a82fb !important;
@@ -99,16 +100,109 @@ st.markdown("""
         border-radius: 15px;
         padding: 10px;
     }
-
-    @media (max-width: 768px) {
-        h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
-        .block-container { 
-            padding-top: 1rem !important;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
-        }
+    
+    div[data-testid="stTextInput"] button[data-testid="stTextInputPasswordVisibility"],
+    div[data-testid="stTextInput"] button,
+    button[aria-label="Show password"],
+    button[aria-label="Hide password"] {
+        display: none !important;
     }
 
+    @media (max-width: 1000px) {
+        h1 { 
+            font-size: 1.6rem !important; 
+            margin-top: 4vh !important; 
+            white-space: nowrap !important;
+        }
+        .block-container { 
+            padding-top: 1rem !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+
+        div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            width: 100% !important;
+            overflow: hidden !important; 
+        }
+        
+        div[data-testid="column"], 
+        div[data-testid="stColumn"] {
+            min-width: 0 !important; 
+            padding: 0 1px !important;
+            overflow: hidden !important; 
+        }
+        
+        div[data-testid="stHorizontalBlock"] .stButton > button {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: none !important;
+            color: #ff7eb3 !important;
+            border: 1px solid rgba(255, 126, 179, 0.8) !important;
+            border-radius: 4px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 36px !important;
+            min-height: 36px !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        div[data-testid="stHorizontalBlock"] .stButton > button p {
+            font-size: 14px !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] {
+            height: 36px !important;
+            min-height: 36px !important;
+            margin-bottom: 2px !important;
+        }
+        div[data-testid="stHorizontalBlock"] .stButton > button:hover:not(:disabled) {
+            background: #ff7eb3 !important;
+            color: white !important;
+        }
+        div[data-testid="stHorizontalBlock"] .stButton > button:disabled {
+            background: rgba(220, 220, 220, 0.4) !important;
+            color: #999 !important;
+            border: 1px solid rgba(200, 200, 200, 0.3) !important;
+        }
+        
+        .time-label {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px !important; 
+            color: #555;
+            margin: 0 !important;
+            margin-bottom: 2px !important;
+            letter-spacing: -0.5px;
+            white-space: nowrap !important;
+            background: rgba(255,255,255,0.4);
+            border-radius: 4px;
+        }
+        .header-label {
+            height: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px !important; 
+            color: #555;
+            margin: 0 !important;
+            margin-bottom: 4px !important;
+            line-height: 1.1;
+            white-space: nowrap !important;
+        }
+    }
+    
     .week-nav-grid {
         display: flex !important;
         flex-direction: row !important;
@@ -232,7 +326,6 @@ st.markdown("""
         border: 1px solid rgba(200, 200, 200, 0.3) !important;
     }
 
-    /* 左端の時間列（固定ボタン用カスタム設定：スマホでの文字消え・薄れ防止） */
     .calendar-col-time .stButton > button:disabled {
         background: rgba(255, 255, 255, 0.6) !important;
         color: #4a4a4a !important;
@@ -272,7 +365,6 @@ if st.session_state.page == 'login':
 
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
-    
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
     is_active = st.toggle("お知らせをユーザーサイトに表示する", value=site_data["notice"]["is_active"])
@@ -476,7 +568,7 @@ elif st.session_state.page == 'reserve':
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("予約を確定する", use_container_width=True):
             if not customer_name or not customer_email:
-                st.warning("⚠️ お名前とメールアドレスを入力してください。")
+                st.warning("⚠️ お名前 and メールアドレスを入力してください。")
             else:
                 try:
                     sender_email = "ayukanail.reserve@gmail.com"
