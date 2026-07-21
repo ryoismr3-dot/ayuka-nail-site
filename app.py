@@ -1,4 +1,5 @@
-import streamlit as st
+
+               import streamlit as st
 import datetime
 import base64
 import os
@@ -34,6 +35,9 @@ if 'page' not in st.session_state:
 def change_page(page_name):
     st.session_state.page = page_name
 
+# ==========================================
+# 共通デザイン設定（スマホ未対応の原因だった古い指示を完全に削除しました）
+# ==========================================
 st.markdown("""
     <style>
     header {visibility: hidden !important;}
@@ -72,6 +76,7 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
 
+    /* 基本のボタン設定 */
     .stButton > button {
         background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(8px);
@@ -166,11 +171,14 @@ elif st.session_state.page == 'home':
 
 elif st.session_state.page == 'reserve':
     
-    # ======== 予約ページ専用の「絶対に横並びを崩さない」最強CSS ========
+    # =========================================================================
+    # 【超重要】予約ページ専用：どんなスマホでも絶対に縦積みを許さない最強CSS
+    # ※全ブラウザ対応の "nth-last-child" を使って比率を強制固定しています
+    # =========================================================================
     st.markdown("""
         <style>
-        @media (max-width: 768px) {
-            /* 予約ページ内のすべての列(カラム)を横並びに強制ロック */
+        @media (max-width: 1000px) {
+            /* 列ブロックを絶対に横並びに固定 */
             div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-direction: row !important;
@@ -178,99 +186,117 @@ elif st.session_state.page == 'reserve':
                 width: 100% !important;
                 max-width: 100vw !important;
                 overflow: hidden !important; 
-                gap: 1px !important;
+                gap: 2px !important;
                 padding-bottom: 5px !important;
             }
-            div[data-testid="column"] {
-                min-width: 0 !important; 
-                flex: 1 1 0 !important; 
+            
+            /* 【3列レイアウト（前の週・年月・次の週）】 */
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(3),
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(3) ~ div {
+                flex: 1 1 0 !important;
+                min-width: 0 !important;
+                width: auto !important;
                 padding: 0 1px !important;
-                overflow: hidden !important; 
             }
-            /* 時間の列（一番左）だけ少し太くして色をつける */
-            div[data-testid="column"]:first-child {
-                flex: 1.4 1 0 !important; 
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(3) + div {
+                flex: 1.5 1 0 !important; 
+            }
+            
+            /* 【8列レイアウト（カレンダー）】全スマホで強制的に12%ずつ割り当てる魔法の指定 */
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8),
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div {
+                flex: 0 0 12% !important;
+                max-width: 12% !important;
+                min-width: 0 !important;
+                padding: 0 1px !important;
+            }
+            /* 時間列（1列目）だけ16%にする (12% x 7日 + 16% = 100%) */
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) {
+                flex: 0 0 16% !important;
+                max-width: 16% !important;
                 background: rgba(255,255,255,0.4);
                 border-radius: 4px;
             }
-            
-            /* カレンダー内のボタンをスマホサイズに極限まで圧縮 */
-            div[data-testid="stHorizontalBlock"] .stButton > button {
-                background: rgba(255, 255, 255, 0.9) !important;
-                backdrop-filter: none !important;
-                color: #ff7eb3 !important;
-                border: 1px solid rgba(255, 126, 179, 0.8) !important;
-                border-radius: 4px !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                height: 32px !important;
-                min-height: 32px !important;
-                width: 100% !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                box-shadow: none !important;
-                transform: none !important;
-            }
-            div[data-testid="stHorizontalBlock"] .stButton > button p {
-                font-size: 14px !important;
-                line-height: 1 !important;
-                margin: 0 !important;
-            }
-            div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] {
-                height: 32px !important;
-                min-height: 32px !important;
-                margin-bottom: 2px !important;
-            }
-            div[data-testid="stHorizontalBlock"] .stButton > button:hover:not(:disabled) {
-                background: #ff7eb3 !important;
-                color: white !important;
-            }
-            div[data-testid="stHorizontalBlock"] .stButton > button:disabled {
-                background: rgba(220, 220, 220, 0.4) !important;
-                color: #999 !important;
-                border: 1px solid rgba(200, 200, 200, 0.3) !important;
-            }
-            
-            /* 文字サイズの設定 */
-            .time-label {
-                height: 32px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                font-size: 10px !important; 
-                color: #555;
-                margin: 0 !important;
-                margin-bottom: 2px !important;
-                letter-spacing: -0.5px;
-                white-space: nowrap !important;
-            }
-            .header-label {
-                height: 35px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                font-size: 10px !important; 
-                color: #555;
-                margin: 0 !important;
-                margin-bottom: 4px !important;
-                line-height: 1.1;
-                white-space: nowrap !important;
-            }
         }
+        
+        /* === 〇×ボタンのスマホ最適化（8列ブロック内限定） === */
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: none !important;
+            color: #ff7eb3 !important;
+            border: 1px solid rgba(255, 126, 179, 0.8) !important;
+            border-radius: 4px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button p {
+            font-size: 14px !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div div[data-testid="stButton"] {
+            height: 32px !important;
+            min-height: 32px !important;
+            margin-bottom: 2px !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button:hover:not(:disabled) {
+            background: #ff7eb3 !important;
+            color: white !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button:disabled {
+            background: rgba(220, 220, 220, 0.4) !important;
+            color: #999 !important;
+            border: 1px solid rgba(200, 200, 200, 0.3) !important;
+        }
+        
+        /* === テキストの設定 === */
+        .time-label {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px !important; 
+            color: #555;
+            margin: 0 !important;
+            margin-bottom: 2px !important;
+            letter-spacing: -0.5px;
+            white-space: nowrap !important;
+        }
+        .header-label {
+            height: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px !important; 
+            color: #555;
+            margin: 0 !important;
+            margin-bottom: 4px !important;
+            line-height: 1.1;
+            white-space: nowrap !important;
+        }
+
+        /* さらに画面が小さいスマホ向け */
         @media (max-width: 400px) {
             .time-label { font-size: 9px !important; }
             .header-label { font-size: 9px !important; }
-            div[data-testid="stHorizontalBlock"] .stButton > button p {
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:first-child:nth-last-child(8) ~ div .stButton > button p {
                 font-size: 11px !important;
             }
         }
         </style>
     """, unsafe_allow_html=True)
-    # =======================================================
+    # =========================================================================
 
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
     
@@ -430,7 +456,6 @@ elif st.session_state.page == 'reserve':
         customer_email = st.text_input("メールアドレス")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        # 大きな予約ボタンはカレンダー用の圧縮CSSの影響を受けないようになっています
         if st.button("予約を確定する", use_container_width=True):
             if not customer_name or not customer_email:
                 st.warning("⚠️ お名前とメールアドレスを入力してください。")
