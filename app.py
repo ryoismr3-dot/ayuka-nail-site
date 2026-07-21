@@ -1,4 +1,3 @@
-
 import streamlit as st
 import datetime
 import base64
@@ -392,7 +391,7 @@ elif st.session_state.page == 'reserve':
                         is_overlap = True
                     elif is_all_day:
                         is_overlap = True
-                    elif day_block_start habitat and day_block_end:
+                    elif day_block_start and day_block_end:
                         cutoff_time = day_block_start - datetime.timedelta(hours=2, minutes=30)
                         buffered_block_end = day_block_end + datetime.timedelta(minutes=30)
                         if slot_start > cutoff_time and slot_start < buffered_block_end:
@@ -444,7 +443,6 @@ elif st.session_state.page == 'reserve':
         with cols[0]:
             st.markdown("<div class='header-label'>時間</div>", unsafe_allow_html=True)
             for t in times:
-                # ズレを防ぐため時間ラベルも「ボタン」にする（disabled=Trueで押せない仕様）
                 st.button(t, key=f"time_lbl_{t}", disabled=True, use_container_width=True)
                 
         for i in range(7):
