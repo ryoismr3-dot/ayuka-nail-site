@@ -171,36 +171,6 @@ st.markdown("""
             color: #999 !important;
             border: 1px solid rgba(200, 200, 200, 0.3) !important;
         }
-        
-        .time-label {
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 10px !important; 
-            color: #555;
-            margin: 0 !important;
-            margin-bottom: 2px !important;
-            letter-spacing: -0.5px;
-            white-space: nowrap !important;
-            background: rgba(255,255,255,0.4);
-            border-radius: 4px;
-        }
-        .header-label {
-            height: 35px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 10px !important; 
-            color: #555;
-            margin: 0 !important;
-            margin-bottom: 4px !important;
-            line-height: 1.1;
-            white-space: nowrap !important;
-        }
     }
     
     .week-nav-grid {
@@ -254,6 +224,12 @@ st.markdown("""
         margin-bottom: 0 !important;
         padding: 0 !important;
     }
+    
+    /* ★ ここが修正ポイント：見出し（一番上）の下だけ6pxの隙間を空けて重なりを防止！ ★ */
+    .calendar-col div[data-testid="stVerticalBlock"] > div.element-container:first-child {
+        margin-bottom: 6px !important;
+    }
+
     div[data-testid="stMarkdownContainer"] p {
         margin: 0 !important;
         padding: 0 !important;
@@ -268,7 +244,7 @@ st.markdown("""
         font-weight: bold;
         font-size: 11px !important; 
         color: #555;
-        margin: 0 !important;
+        margin: 0 0 6px 0 !important; /* ★ 見出し自体の下にも隙間を確保 */
         background: rgba(255,255,255,0.3);
         border-radius: 4px;
         line-height: 1.1;
@@ -568,7 +544,7 @@ elif st.session_state.page == 'reserve':
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("予約を確定する", use_container_width=True):
             if not customer_name or not customer_email:
-                st.warning("⚠️ お名前 and メールアドレスを入力してください。")
+                st.warning("⚠️ お名前とメールアドレスを入力してください。")
             else:
                 try:
                     sender_email = "ayukanail.reserve@gmail.com"
