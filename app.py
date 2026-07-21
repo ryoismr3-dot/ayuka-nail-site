@@ -41,7 +41,7 @@ st.markdown("""
     footer {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important;}
-
+    
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
 
     .stApp {
@@ -71,24 +71,28 @@ st.markdown("""
         color: #6a82fb !important;
         text-shadow: 2px 2px 4px rgba(255,255,255,0.9);
     }
-
-    [data-testid="stHorizontalBlock"] {
+    
+    /* カレンダー（8列のブロック）専用の横スクロール設定 */
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
         align-items: center !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
     }
-    [data-testid="column"] {
-        min-width: 55px !important;
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"] {
+        min-width: 48px !important;
         padding: 0 2px !important;
         flex: 0 0 auto !important;
     }
-    [data-testid="column"]:first-child {
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(8)) > div[data-testid="column"]:first-child {
         min-width: 65px !important;
         position: sticky;
         left: 0;
-        background: rgba(255,255,255,0.7);
+        background: rgba(255,255,255,0.9);
         backdrop-filter: blur(5px);
-        z-index: 1;
+        -webkit-backdrop-filter: blur(5px);
+        z-index: 10;
         text-align: right !important;
         padding-right: 5px !important;
     }
@@ -138,11 +142,11 @@ if st.session_state.page == 'login':
 
 elif st.session_state.page == 'admin_dashboard':
     st.markdown("<h1>⚙️ Admin Dashboard</h1>", unsafe_allow_html=True)
-
+    
     st.markdown("### 📢 お知らせ（ポップアップ）設定")
     notice_text = st.text_area("お知らせ内容", value=site_data["notice"]["text"])
     is_active = st.toggle("お知らせをユーザーサイトに表示する", value=site_data["notice"]["is_active"])
-
+    
     if st.button("💾 お知らせを保存する", use_container_width=True):
         site_data["notice"] = {"text": notice_text, "is_active": is_active}
         save_data(site_data)
@@ -156,8 +160,8 @@ elif st.session_state.page == 'admin_dashboard':
 elif st.session_state.page == 'home':
     notice = site_data["notice"]
     if notice["is_active"] and notice["text"]:
-        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔")
-        st.info(f"**【お知らせ】**\n\n{notice['text']}")
+        st.toast(f"📢 お知らせ: {notice['text']}", icon="🔔") 
+        st.info(f"**【お知らせ】**\n\n{notice['text']}") 
 
     st.markdown("<h1 style='margin-top: 2vh;'>Welcome to Ayuka's Nail</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1rem;'>ご希望のメニューを選択してください</p>", unsafe_allow_html=True)
@@ -173,7 +177,7 @@ elif st.session_state.page == 'home':
 
 elif st.session_state.page == 'reserve':
     st.markdown("<h1>📅 Reservation</h1>", unsafe_allow_html=True)
-
+    
     if "week_offset" not in st.session_state:
         st.session_state.week_offset = 0
     if "selected_datetime" not in st.session_state:
@@ -230,7 +234,7 @@ elif st.session_state.page == 'reserve':
 
                     if start_str.endswith('Z'): start_str = start_str[:-1] + '+00:00'
                     if end_str.endswith('Z'): end_str = end_str[:-1] + '+00:00'
-
+                    
                     event_start = datetime.datetime.fromisoformat(start_str)
                     event_end = datetime.datetime.fromisoformat(end_str)
 
@@ -259,9 +263,9 @@ elif st.session_state.page == 'reserve':
 
                     if not is_overlap:
                         slots.append(slot_start.strftime("%H:%M"))
-
+                    
                     current_dt += datetime.timedelta(minutes=30)
-
+                
                 available_dict[target_date] = slots
             return available_dict
         except Exception as e:
@@ -274,7 +278,7 @@ elif st.session_state.page == 'reserve':
     off_choice = st.radio("オフ", ["オフあり", "オフなし"], horizontal=True, label_visibility="collapsed")
 
     st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
-
+    
     col_p, col_c, col_n = st.columns([1, 2, 1])
     with col_p:
         if st.button("← 前の週", use_container_width=True):
@@ -295,7 +299,7 @@ elif st.session_state.page == 'reserve':
     else:
         weekdays = ["月", "火", "水", "木", "金", "土", "日"]
         times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
-
+        
         cols = st.columns(8)
         cols[0].markdown("<div style='text-align:right; font-weight:bold; font-size:0.9em; padding-top:10px;'>時間</div>", unsafe_allow_html=True)
         for i in range(7):
@@ -321,7 +325,7 @@ elif st.session_state.page == 'reserve':
     if st.session_state.selected_datetime:
         sel_d, sel_t = st.session_state.selected_datetime
         st.success(f"✅ 選択中の日時: **{sel_d.strftime('%Y年%m月%d日')} {sel_t}**")
-
+        
         customer_name = st.text_input("お名前")
         customer_email = st.text_input("メールアドレス")
 
@@ -347,7 +351,7 @@ elif st.session_state.page == 'reserve':
                     server.send_message(msg)
                     server.quit()
                     st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
-                    st.session_state.selected_datetime = None
+                    st.session_state.selected_datetime = None 
                 except Exception as e:
                     st.error(f"メールの送信に失敗しました。管理者のメール設定を確認してください。")
     else:
