@@ -108,24 +108,32 @@ st.markdown("""
         h1 { font-size: 2.2rem !important; margin-top: 2vh !important; }
         .block-container { 
             padding-top: 1rem !important;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
         }
     }
 
     /* =======================================================
-       ここから先はJSで名前を付けた「カレンダー(calendar-grid)」専用のCSSです！
-       他の画面（ログイン画面など）には一切影響しません。
+       ★ カレンダー専用（JSで隔離済）の最強ロックCSS ★
        ======================================================= */
     
-    /* 週切り替えボタン専用 */
-    .week-nav {
+    /* 週切り替えボタンの横並びロック */
+    .week-nav-grid {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
+        width: 100% !important;
         align-items: center !important;
+        gap: 5px !important;
     }
-    .week-nav > div { min-width: 0 !important; }
+    .week-nav-grid > div {
+        flex: 1 1 0 !important;
+        width: 0 !important; /* 横にはみ出すのを防ぐ魔法 */
+        min-width: 0 !important;
+    }
+    .week-nav-grid > div:nth-child(2) {
+        flex: 1.5 1 0 !important;
+    }
 
     /* カレンダーグリッド全体の横並びロック */
     .calendar-grid {
@@ -133,35 +141,38 @@ st.markdown("""
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         width: 100% !important;
-        max-width: 100vw !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
         overflow: hidden !important; 
-        gap: 0 !important;
+        gap: 2px !important;
         padding-bottom: 10px !important;
+        margin: 0 !important;
     }
     
-    /* カレンダーの列設定 */
-    .calendar-grid > div[data-testid="column"] {
+    /* カレンダーの各列の設定（ここが横ずれ防止の肝！） */
+    .calendar-col {
+        flex: 1 1 0 !important;
+        width: 0 !important; /* 中の文字が太くても強制的に列を縮める！ */
         min-width: 0 !important; 
-        padding: 0 1px !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow: hidden !important; 
     }
-    .calendar-grid > div[data-testid="column"]:first-child {
-        width: 16% !important; 
-        flex: 0 0 16% !important; 
+    .calendar-col-time {
+        flex: 1.4 1 0 !important; /* 時間列だけ少し広め */
         background: rgba(255,255,255,0.4);
         border-radius: 4px;
     }
-    .calendar-grid > div[data-testid="column"]:not(:first-child) {
-        width: 12% !important; 
-        flex: 0 0 12% !important; 
-    }
 
     /* ★ 縦のズレをなくすための極限ミリ単位調整 ★ */
-    .calendar-grid div[data-testid="stVerticalBlock"] {
-        gap: 2px !important; /* ボタンとボタンの隙間を2pxに固定 */
+    .calendar-col div[data-testid="stVerticalBlock"] {
+        gap: 2px !important; /* ボタンとボタンの隙間を2pxに完全固定 */
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    .calendar-grid div.element-container {
+    .calendar-col div.element-container {
         margin-bottom: 0 !important;
+        padding: 0 !important;
     }
     div[data-testid="stMarkdownContainer"] p {
         margin: 0 !important;
@@ -170,7 +181,7 @@ st.markdown("""
 
     /* 日付と時間の見出し（高さ36pxに固定） */
     .header-label {
-        height: 40px !important;
+        height: 36px !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -183,6 +194,7 @@ st.markdown("""
         border-radius: 4px;
         line-height: 1.1;
         white-space: nowrap !important;
+        overflow: hidden !important;
     }
 
     /* 左端の時間ラベル（高さ36pxに固定） */
@@ -199,16 +211,17 @@ st.markdown("""
         border-radius: 4px;
         letter-spacing: -0.5px;
         white-space: nowrap !important;
+        overflow: hidden !important;
     }
 
     /* カレンダーの〇×ボタン（高さ36pxに完全固定！） */
-    .calendar-grid div[data-testid="stButton"] {
+    .calendar-col div[data-testid="stButton"] {
         height: 36px !important;
         min-height: 36px !important;
         padding: 0 !important;
         margin: 0 !important;
     }
-    .calendar-grid .stButton > button {
+    .calendar-col .stButton > button {
         height: 36px !important;
         min-height: 36px !important;
         padding: 0 !important;
@@ -219,27 +232,28 @@ st.markdown("""
         align-items: center !important;
         justify-content: center !important;
         box-shadow: none !important;
-        transform: none !important;
+        transform: none !important; /* ホバー時の浮き上がりを防止 */
     }
-    .calendar-grid .stButton > button p {
+    .calendar-col .stButton > button p {
         font-size: 14px !important;
         line-height: 1 !important;
         margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* 選択されていない〇ボタン */
-    .calendar-grid .stButton > button[kind="secondary"] {
+    .calendar-col .stButton > button[kind="secondary"] {
         background: rgba(255, 255, 255, 0.9) !important;
         color: #ff7eb3 !important;
         border: 1px solid rgba(255, 126, 179, 0.8) !important;
     }
-    .calendar-grid .stButton > button[kind="secondary"]:hover:not(:disabled) {
+    .calendar-col .stButton > button[kind="secondary"]:hover:not(:disabled) {
         background: #ff7eb3 !important;
         color: white !important;
     }
 
     /* ★ 選択された〇ボタン（赤く光る！） ★ */
-    .calendar-grid .stButton > button[kind="primary"] {
+    .calendar-col .stButton > button[kind="primary"] {
         background: #ff3b3b !important;
         color: white !important;
         border: 2px solid #cc0000 !important;
@@ -248,16 +262,17 @@ st.markdown("""
     }
 
     /* ×ボタン（予約不可） */
-    .calendar-grid .stButton > button:disabled {
+    .calendar-col .stButton > button:disabled {
         background: rgba(220, 220, 220, 0.4) !important;
-        color: #999 !important;
+        color: #aaa !important;
         border: 1px solid rgba(200, 200, 200, 0.3) !important;
     }
 
+    /* スマホ画面の極小化対応 */
     @media (max-width: 400px) {
         .time-label { font-size: 9px !important; letter-spacing: -1px; }
         .header-label { font-size: 9px !important; }
-        .calendar-grid .stButton > button p { font-size: 12px !important; }
+        .calendar-col .stButton > button p { font-size: 12px !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -425,6 +440,10 @@ elif st.session_state.page == 'reserve':
 
     st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
     
+    # -----------------------------------------------------
+    # 週切り替えブロック（JSで分離します）
+    # -----------------------------------------------------
+    st.markdown("<div id='week-nav-root'></div>", unsafe_allow_html=True)
     col_p, col_c, col_n = st.columns([1, 2, 1])
     with col_p:
         if st.button("← 前の週", use_container_width=True):
@@ -446,7 +465,11 @@ elif st.session_state.page == 'reserve':
         weekdays = ["月", "火", "水", "木", "金", "土", "日"]
         times = [(datetime.datetime.combine(today, datetime.time(8,0)) + datetime.timedelta(minutes=30*i)).strftime("%H:%M") for i in range(29)]
         
-        cols = st.columns([1.6, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2])
+        # -----------------------------------------------------
+        # カレンダー本体ブロック（JSで分離します）
+        # -----------------------------------------------------
+        st.markdown("<div id='my-calendar-root'></div>", unsafe_allow_html=True)
+        cols = st.columns([1.5, 1, 1, 1, 1, 1, 1, 1])
         
         with cols[0]:
             st.markdown("<div class='header-label'>時間</div>", unsafe_allow_html=True)
@@ -516,40 +539,61 @@ elif st.session_state.page == 'reserve':
         change_page('home')
         st.rerun()
 
-    # === カレンダーブロックだけを分離する魔法のJavaScript ＆ 自動スクロールの魔法 ===
-    js_code = """
-    <script>
-        // 1. カレンダーブロックだけに専用の名前（クラス）をつける魔法
-        function isolateBlocks() {
-            const blocks = window.parent.document.querySelectorAll('div[data-testid="stHorizontalBlock"]');
-            blocks.forEach(block => {
-                if (block.children.length === 8) {
-                    block.classList.add('calendar-grid'); // カレンダーだけ！
-                }
-                if (block.children.length === 3 && block.innerText.includes('前の週')) {
-                    block.classList.add('week-nav'); // 週切り替えだけ！
-                }
-            });
-        }
-        isolateBlocks();
-        const observer = new MutationObserver(isolateBlocks);
-        observer.observe(window.parent.document.body, {childList: true, subtree: true});
-    """
+    # =======================================================
+    # カレンダーブロックだけを分離する強力なJS ＆ スクロール
+    # =======================================================
+    scroll_flag = "true" if st.session_state.get('scroll_to_form') else "false"
     
-    # 2. 〇が押されたら自動で下にスクロールする魔法
-    if st.session_state.get('scroll_to_form'):
-        js_code += """
-        setTimeout(() => {
-            const target = window.parent.document.getElementById('customer-form');
-            if (target) {
-                target.scrollIntoView({behavior: 'smooth', block: 'start'});
-            }
-        }, 100);
-        """
-        st.session_state.scroll_to_form = False # 1度スクロールしたらオフに戻す
+    js_code = f"""
+    <script>
+        function applyStyles() {{
+            // カレンダーグリッドの適用
+            const calRoots = window.parent.document.querySelectorAll('#my-calendar-root');
+            calRoots.forEach(root => {{
+                let el = root.closest('.element-container');
+                if (el && el.nextElementSibling) {{
+                    let grid = el.nextElementSibling.querySelector('div[data-testid="stHorizontalBlock"]');
+                    if (grid && !grid.classList.contains('calendar-grid')) {{
+                        grid.classList.add('calendar-grid');
+                        Array.from(grid.children).forEach((col, i) => {{
+                            col.classList.add('calendar-col');
+                            if (i === 0) col.classList.add('calendar-col-time');
+                            else col.classList.add('calendar-col-day');
+                        }});
+                    }}
+                }}
+            }});
 
-    js_code += "</script>"
+            // 週切り替えボタンの適用
+            const navRoots = window.parent.document.querySelectorAll('#week-nav-root');
+            navRoots.forEach(root => {{
+                let el = root.closest('.element-container');
+                if (el && el.nextElementSibling) {{
+                    let grid = el.nextElementSibling.querySelector('div[data-testid="stHorizontalBlock"]');
+                    if (grid && !grid.classList.contains('week-nav-grid')) {{
+                        grid.classList.add('week-nav-grid');
+                    }}
+                }}
+            }});
+        }}
+
+        applyStyles();
+        const observer = new MutationObserver(applyStyles);
+        observer.observe(window.parent.document.body, {{childList: true, subtree: true}});
+        
+        // 〇ボタンを押した後の自動スクロール処理
+        if ({scroll_flag}) {{
+            setTimeout(() => {{
+                const target = window.parent.document.getElementById('customer-form');
+                if(target) target.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+            }}, 200);
+        }}
+    </script>
+    """
     components.html(js_code, height=0, width=0)
+    
+    if st.session_state.get('scroll_to_form'):
+        st.session_state.scroll_to_form = False # 1度スクロールしたらオフに戻す
 
 elif st.session_state.page == 'gallery':
     st.markdown("<h1>📸 Gallery</h1>", unsafe_allow_html=True)
