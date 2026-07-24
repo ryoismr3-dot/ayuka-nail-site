@@ -224,7 +224,7 @@ st.markdown("""
         margin-bottom: 0 !important;
         padding: 0 !important;
     }
-     
+    
     .calendar-col div[data-testid="stVerticalBlock"] > div.element-container:first-child {
         margin-bottom: 6px !important;
     }
@@ -243,7 +243,7 @@ st.markdown("""
         font-weight: bold;
         font-size: 11px !important; 
         color: #555;
-        margin: 0 0 6px 0 !important; 
+        margin: 0 0 6px 0 !important;
         background: rgba(255,255,255,0.3);
         border-radius: 4px;
         line-height: 1.1;
@@ -480,7 +480,7 @@ elif st.session_state.page == 'reserve':
     st.markdown("**💅 オフの有無**")
     off_choice = st.radio("オフ", ["オフあり", "オフなし"], horizontal=True, label_visibility="collapsed")
 
-    st.markdown("<br> 📅 日時を選択", unsafe_allow_html=True)
+    st.markdown("<br>### 📅 日時を選択", unsafe_allow_html=True)
     
     st.markdown("<div id='week-nav-root'></div>", unsafe_allow_html=True)
     col_p, col_c, col_n = st.columns([1, 2, 1])
@@ -546,8 +546,9 @@ elif st.session_state.page == 'reserve':
                 st.warning("⚠️ お名前とメールアドレスを入力してください。")
             else:
                 try:
+                    # ここでアルファベットのタイポを修正しました！（jgqx -> jqgx）
                     sender_email = "ayukanail.reserve@gmail.com"
-                    sender_password = "fibpjgqxaabhohsc"
+                    sender_password = "fibpjqgxaabhohsc"
 
                     subject = "【Ayuka's Nail】仮予約を受け付けました"
                     body = f"{customer_name} 様\n\nAyuka's Nailをご利用いただきありがとうございます。\n以下の内容で仮予約を受け付けました。\n\n========================\n【ご希望メニュー】 {menu_choice}\n【オフの有無】 {off_choice}\n【ご希望日時】 {sel_d.strftime('%Y年%m月%d日')} {sel_t}\n========================\n\n※現在「仮予約」の状態です。\n日程を調整のうえ、後ほど確定のご連絡をいたします。\n\nAyuka's Nail"
@@ -564,7 +565,8 @@ elif st.session_state.page == 'reserve':
                     st.success("🎉 仮予約を受け付けました。ご入力いただいたメールアドレスに確認メールを送信しました！")
                     st.session_state.selected_datetime = None 
                 except Exception as e:
-                    st.error(f"メールの送信に失敗しました。管理者のメール設定を確認してください。")
+                    # 万が一エラーが起きても原因がわかるようにしました
+                    st.error(f"メールの送信に失敗しました（エラー詳細: {e}）。管理者のメール設定を確認してください。")
     else:
         st.info("👆 上の表から「〇」をクリックして、ご希望の日時を選択してください。")
 
